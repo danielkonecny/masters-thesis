@@ -18,9 +18,9 @@
 %   projekt-30-prilohy-appendices-en.tex - přílohy v angličtině / appendices in English
 %==============================================================================
 %\documentclass[]{fitthesis} % bez zadání - pro začátek práce, aby nebyl problém s překladem
-\documentclass[english]{fitthesis} % without assignment - for the work start to avoid compilation problem
+%\documentclass[english]{fitthesis} % without assignment - for the work start to avoid compilation problem
 %\documentclass[zadani]{fitthesis} % odevzdani do wisu a/nebo tisk s barevnými odkazy - odkazy jsou barevné
-%\documentclass[english,zadani]{fitthesis} % for submission to the IS FIT and/or print with color links - links are color
+\documentclass[english,zadani]{fitthesis} % for submission to the IS FIT and/or print with color links - links are color
 %\documentclass[zadani,print]{fitthesis} % pro černobílý tisk - odkazy jsou černé
 %\documentclass[english,zadani,print]{fitthesis} % for the black and white print - links are black
 %\documentclass[zadani,cprint]{fitthesis} % pro barevný tisk - odkazy jsou černé, znak VUT barevný
@@ -45,14 +45,27 @@
 % Basic packages are at the bottom of template file fitthesis.cls
 % zde můžeme vložit vlastní balíčky / you can place own packages here
 
+% Color blindtext to lightgray %
+\usepackage{blindtext,letltxmacro,xcolor,xparse}
+\usepackage{lipsum}% for simulating real text
+\LetLtxMacro{\blindtextblindtext}{\blindtext}
+\LetLtxMacro{\blindtextBlindtext}{\Blindtext}
+\RenewDocumentCommand{\blindtext}{O{\value{blindtext}}}{%
+  \begingroup\color{lightgray}\blindtextblindtext[#1]\endgroup
+}
+\RenewDocumentCommand{\Blindtext}{O{\value{blindtext}}O{\value{Blindtext}}}{%
+  \begingroup\color{lightgray}\blindtextBlindtext[#1][#2]\endgroup
+}
+% --------------------------- %
+
 % Kompilace po částech (rychlejší, ale v náhledu nemusí být vše aktuální)
 % Compilation piecewise (faster, but not all parts in preview will be up-to-date)
 % \usepackage{subfiles}
 
 % Nastavení cesty k obrázkům
 % Setting of a path to the pictures
-%\graphicspath{{obrazky-figures/}{./obrazky-figures/}}
-%\graphicspath{{obrazky-figures/}{../obrazky-figures/}}
+%\graphicspath{{figures/}{./figures/}}
+%\graphicspath{{figures/}{../figures/}}
 
 %---rm---------------
 \renewcommand{\rmdefault}{lmr}%zavede Latin Modern Roman jako rm / set Latin Modern Roman as rm
@@ -67,7 +80,14 @@
 % to avoid unnecessary replacements in the API descriptions etc.
 \csdoublequotesoff
 
+\usepackage{graphicx}
+\DeclareGraphicsRule{.ai}{pdf}{.ai}{}
 
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, chains, positioning, shapes.geometric}
+
+\DeclareMathOperator*{\argmax}{arg\!\max}
+\DeclareMathOperator*{\argmin}{arg\!\min}
 
 \usepackage{url}
 
@@ -123,9 +143,9 @@
   %Nazev prace / thesis title
   title.cs={Použití self-supervised learning pro rozpoznání sportovních pozic v obraze},  % název práce v češtině či slovenštině (dle zadání) / thesis title in czech language (according to assignment)
   title.en={Self-Supervised Learning for Recognition of Sports Poses in Image}, % název práce v angličtině / thesis title in english
-  %title.length={14.5cm}, % nastavení délky bloku s titulkem pro úpravu zalomení řádku (lze definovat zde nebo níže) / setting the length of a block with a thesis title for adjusting a line break (can be defined here or below)
+  title.length={15cm}, % nastavení délky bloku s titulkem pro úpravu zalomení řádku (lze definovat zde nebo níže) / setting the length of a block with a thesis title for adjusting a line break (can be defined here or below)
   %sectitle.length={14.5cm}, % nastavení délky bloku s druhým titulkem pro úpravu zalomení řádku (lze definovat zde nebo níže) / setting the length of a block with a second thesis title for adjusting a line break (can be defined here or below)
-  %dectitle.length={14.5cm}, % nastavení délky bloku s titulkem nad prohlášením pro úpravu zalomení řádku (lze definovat zde nebo níže) / setting the length of a block with a thesis title above declaration for adjusting a line break (can be defined here or below)
+  dectitle.length={13cm}, % nastavení délky bloku s titulkem nad prohlášením pro úpravu zalomení řádku (lze definovat zde nebo níže) / setting the length of a block with a thesis title above declaration for adjusting a line break (can be defined here or below)
   %Autor / Author
   author.name={Daniel},   % jméno autora / author name
   author.surname={Konečný},   % příjmení autora / author surname 
@@ -139,33 +159,47 @@
   supervisor.title.p={prof. Ing.},   %titul před jménem (nepovinné) / title before the name (optional)
   supervisor.title.a={Ph.D.},    %titul za jménem (nepovinné) / title after the name (optional)
   % Klíčová slova / keywords
-  keywords.cs={Sem budou zapsána jednotlivá klíčová slova v českém (slovenském) jazyce, oddělená čárkami.}, % klíčová slova v českém či slovenském jazyce / keywords in czech or slovak language
-  keywords.en={Sem budou zapsána jednotlivá klíčová slova v anglickém jazyce, oddělená čárkami.}, % klíčová slova v anglickém jazyce / keywords in english
-  %keywords.en={Here, individual keywords separated by commas will be written in English.},
+  keywords.cs={strojové učení, počítačové vidění, rozpoznání, konvoluční neuronová síť, obraz, self-supervised learning, sportovní pozice}, % klíčová slova v českém či slovenském jazyce / keywords in czech or slovak language
+  keywords.en={machine learning, computer vision, recognition, convolutional neural network, image, self-supervised learning, sports pose}, % klíčová slova v anglickém jazyce / keywords in english
   % Abstrakt / Abstract
-  abstract.cs={Do tohoto odstavce bude zapsán výtah (abstrakt) práce v českém (slovenském) jazyce.}, % abstrakt v českém či slovenském jazyce / abstract in czech or slovak language
-  abstract.en={Do tohoto odstavce bude zapsán výtah (abstrakt) práce v anglickém jazyce.}, % abstrakt v anglickém jazyce / abstract in english
-  %abstract.en={An abstract of the work in English will be written in this paragraph.},
+  abstract.cs={Cílem této práce je rozpoznání sportovních pozic v obrazových datech za pomocí přístupu self-supervised learning. Trénovací data jsou získaná nahráváním jedné scény z více směrů. Po synchronizaci je možné nahrané záběry využít pro naučení reprezentace sportovní pozice v latentním prostoru. Rozpoznání konkrétních pozic v latentním prostoru je provedeno ?. Úspěšnost této metody na datové sadě ? je ? s ?tímto množstvím použitých označených dat?. V porovnání s metodami supervised learning je tento přístup srovnatelný úspěšností, avšak zvládá to za použití menšího množství označených dat při učení?}, % abstrakt v českém či slovenském jazyce / abstract in czech or slovak language
+  abstract.en={The goal of this thesis is recognizing sports poses in image data with self-supervised learning approach. Data for training are obtained via recording of one scene from multiple viewpoints. When synchronized, the recorded footage serves for learning sports pose representation in a latent space. Recognition is then done in the latent space with ?. Success rate of this method on ? dataset is ? with ?this amount of labeled images?. Recognition precision of the self-supervised-learned model managed to be comparable with supervised learning solutions but with less provided labeled data?},
   % Prohlášení (u anglicky psané práce anglicky, u slovensky psané práce slovensky) / Declaration (for thesis in english should be in english)
-  declaration={Prohlašuji, že jsem tuto bakalářskou práci vypracoval samostatně pod vedením pana X...
-Další informace mi poskytli...
-Uvedl jsem všechny literární prameny, publikace a další zdroje, ze kterých jsem čerpal.},
-  %declaration={I hereby declare that this Bachelor's thesis was prepared as an original work by the author under the supervision of Mr. X
-% The supplementary information was provided by Mr. Y
-% I have listed all the literary sources, publications and other sources, which were used during the preparation of this thesis.},
+  declaration={I hereby declare that this Master's thesis was prepared as an original work by the author under the supervision of prof. Ing. Adam Herout, Ph.D. I have listed all the literary sources, publications and other sources, which were used during the preparation of this thesis.},
   % Poděkování (nepovinné, nejlépe v jazyce práce) / Acknowledgement (optional, ideally in the language of the thesis)
-  acknowledgment={V této sekci je možno uvést poděkování vedoucímu práce a těm, kteří poskytli odbornou pomoc
-(externí zadavatel, konzultant apod.).},
-  %acknowledgment={Here it is possible to express thanks to the supervisor and to the people which provided professional help
-%(external submitter, consultant, etc.).},
+  acknowledgment={I would like to express my sincere gratitude to my supervisor prof. Ing. Adam Herout, Ph.D. for his valuable advice, professional guidance, and important feedback. I would also like to thank Mgr. Lada Konečná for helpful consultations of mathematical topics.},
   % Rozšířený abstrakt (cca 3 normostrany) - lze definovat zde nebo níže / Extended abstract (approximately 3 standard pages) - can be defined here or below
-  %extendedabstract={Do tohoto odstavce bude zapsán rozšířený výtah (abstrakt) práce v českém (slovenském) jazyce.},
+  extendedabstract={Cílem této práce je rozpoznání sportovních pozic v obrazových datech za pomocí přístupu self-supervised learning.
+  \blindtext
+  
+  Trénovací data jsou získaná nahráváním jedné scény s více kamerami.
+  \todo{Postupné ztěžování scén - prvně jednoduchá scéna, poté různé úhly a rozbitejší prostředí}
+  \blindtext
+  
+  \todo{Synchronizace a příprava datové sady}
+  \blindtext
+  
+  Po synchronizaci je možné nahrané záběry využít pro naučení reprezentace sportovní pozice v latentním prostoru.
+  \todo{Různé loss pro self-supervised learning a prostě celý Encoder.}
+  \blindtext
+  
+  Rozpoznání konkrétních pozic v latentním prostoru je provedeno ?.
+  \todo{Zvážené metody pro rozpoznávání v latentním prostoru.}
+  \blindtext
+  
+  Úspěšnost této metody na datové sadě ? je ? s ?tímto množstvím použitých označených dat?.
+  \todo{Konkrétní data.}
+  \blindtext
+  
+  V porovnání s metodami supervised learning je tento přístup srovnatelný úspěšností, avšak zvládá to za použití menšího množství označených dat při učení.
+  \todo{Porovnání s dalšími metodami a SOTA modely.}
+  \blindtext},
   %extabstract.odd={true}, % Začít rozšířený abstrakt na liché stránce? / Should extended abstract start on the odd page?
   %faculty={FIT}, % FIT/FEKT/FSI/FA/FCH/FP/FAST/FAVU/USI/DEF
   faculty.cs={Fakulta informačních technologií}, % Fakulta v češtině - pro využití této položky výše zvolte fakultu DEF / Faculty in Czech - for use of this entry select DEF above
   faculty.en={Faculty of Information Technology}, % Fakulta v angličtině - pro využití této položky výše zvolte fakultu DEF / Faculty in English - for use of this entry select DEF above
-  department.cs={Ústav matematiky}, % Ústav v češtině - pro využití této položky výše zvolte ústav DEF nebo jej zakomentujte / Department in Czech - for use of this entry select DEF above or comment it out
-  department.en={Institute of Mathematics} % Ústav v angličtině - pro využití této položky výše zvolte ústav DEF nebo jej zakomentujte / Department in English - for use of this entry select DEF above or comment it out
+  department.cs={Ústav počítačové grafiky a multimédií}, % Ústav v češtině - pro využití této položky výše zvolte ústav DEF nebo jej zakomentujte / Department in Czech - for use of this entry select DEF above or comment it out
+  department.en={Department of Computer Graphics and Multimedia} % Ústav v angličtině - pro využití této položky výše zvolte ústav DEF nebo jej zakomentujte / Department in English - for use of this entry select DEF above or comment it out
 }
 
 % Rozšířený abstrakt (cca 3 normostrany) - lze definovat zde nebo výše / Extended abstract (approximately 3 standard pages) - can be defined here or above
@@ -200,6 +234,8 @@ Uvedl jsem všechny literární prameny, publikace a další zdroje, ze kterých
   % ----------------------------------------------
   \setlength{\parskip}{0pt}
 
+  % Zanoreni obsahu jen do druhe urovne.
+  \setcounter{tocdepth}{1}
   {\hypersetup{hidelinks}\tableofcontents}
   
   % Seznam obrazku a tabulek (pokud prace obsahuje velke mnozstvi obrazku, tak se to hodi)
@@ -235,7 +271,12 @@ Uvedl jsem všechny literární prameny, publikace a další zdroje, ze kterých
   % Text prace / Thesis text
   % ----------------------------------------------
   \ifenglish
-    \input{projekt-01-kapitoly-chapters-en}
+    \input{chapter1-intro}
+    \input{chapter2-nn-in-cv}
+    \input{chapter3-dataset}
+    \input{chapter4-representing}
+    \input{chapter5-recognizing}
+    \input{chapter6-conclusion}
   \else
     \input{projekt-01-kapitoly-chapters}
   \fi
@@ -269,7 +310,7 @@ Uvedl jsem všechny literární prameny, publikace a další zdroje, ze kterých
   \fi
 \fi
   \begin{flushleft}
-  \bibliography{projekt-20-literatura-bibliography}
+  \bibliography{bibliography}
   \end{flushleft}
 
   % vynechani stranky v oboustrannem rezimu
@@ -329,7 +370,7 @@ Uvedl jsem všechny literární prameny, publikace a další zdroje, ze kterých
   
   % Přílohy / Appendices
   \ifenglish
-    \input{projekt-30-prilohy-appendices-en}
+    \input{appendices}
   \else
     \input{projekt-30-prilohy-appendices}
   \fi

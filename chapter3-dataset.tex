@@ -1,0 +1,107 @@
+\chapter{\label{chap:dataset}Obtaining Datasets for Self-Supervised Learning}
+
+Datasets for self-supervised learning in general can be very different from each other, their form depends on the task that is being solved and the way of achieving the self-supervision. Although, all of them have one thing in common -- they mainly consist of unannotated data and need smaller amount annotated data to be able to classify new samples well.
+
+\todo{How datasets for self-supervised learning differ from other datasets.}
+\blindtext
+
+\blindtext
+
+\section{Multiple Cameras Filming a Scene from Multiple Viewpoints}
+
+Self-supervision can be achieved by filming a scene from different viewpoints and using the synchronized footage as a supervision.
+\blindtext
+
+This thesis proposes a tool for automatic synchronization of multiple videos. It also offers few simple editing features as cropping and trimming. Finally, the tool generates tuples of images sorted into triplets that are ready to be used for training. Cross-platform video conversion solution \texttt{FFmpeg} is used to handle all video modifications effectively. The individual parts of the editing tool are presented in the following subsections in the order of their execution. 
+
+The tool was designed to fit the needs of this thesis during the time the datasets for experiments were created.
+\blindtext
+
+\begin{figure*}[ht]\centering
+  \centering
+  \includegraphics[width=\linewidth,height=2in]{figures/placeholder.pdf}
+  \caption{Scene filmed by 3 cameras from different angles, maybe draw simply a real scene in Illustrator or just take a photo of filming a real scene.}
+  \label{SceneMultipleCameras}
+\end{figure*}
+
+\todo{...cameras can move during the recording of the scene, they do not need to be steady (but the optical flow synchronization might not work)...}
+\blindtext
+
+\blindtext
+
+\begin{figure*}[ht]\centering
+  \centering
+  \includegraphics[width=\linewidth,height=1.5in]{figures/placeholder.pdf}
+  \caption{Diagram with flow how the video is processed into a dataset. Crop -> Synchronize -> ...}
+  \label{DatasetPreparation}
+\end{figure*}
+
+\blindtext
+
+\subsection{Preparing Videos Filmed with Various Cameras}
+
+At first, the videos can be cropped and trimmed to contain only the important parts of the scene.
+\blindtext
+
+In most cases, the video's resolution does not match the input of the model and has to be scaled down and is often also cropped to correct ratio. The tool allows the user to select a bounding box around the scene that has to be included in the dataset and computes the correct crop coordinates to match the input of the network.
+
+\todo{Describe all operations and constraints of cropping.}
+\blindtext
+
+The user is also allowed to trim the start and/or the end of the video.
+\todo{To crop the garbage at the beginning and at the end.}
+\blindtext
+
+\subsection{Synchronizing Videos Using Optical Flow Data}
+
+The tool computes optical flow for each video. Since optical flow information is computed for each pixel and has 4 directions, the data are aggregated over all pixels in the video for each of 4 directions separately. Afterwards, correlation is computed over all possible overlaps of the videos to find the best fit. Finally, videos are trimmed at the beginning and at the end to have the same length and are thus synchronized because of the correct trim times.
+
+\blindtext
+
+\begin{figure*}[ht]\centering
+  \centering
+  \includegraphics{figures/placeholder.pdf}
+  \caption{Visualize somehow the amount of flow in all directions in different videos and how they are synchronized. Video as a single line and with some offset from other videos.}
+  \label{VideoSynchronization}
+\end{figure*}
+
+\subsection{Generating Dataset from Synchronized Videos}
+
+The tool can generate tuples of anchor, positive and negative images from which the model can extract multiple triplets to achieve effective loading of training samples.
+\blindtext
+
+\blindtext
+
+\begin{figure*}[ht]\centering
+  \centering
+  \includegraphics{figures/placeholder.pdf}
+  \caption{Single images put into a grid.}
+  \label{GridOfImages}
+\end{figure*}
+
+\blindtext
+
+\section{Annotated Data for Sports Pose Recognition}
+
+Yoga-82 dataset contains over 28 400 annotated samples of 82 different yoga poses.
+\blindtext
+
+\blindtext
+
+\blindtext
+
+\blindtext
+
+\blindtext
+
+\section{Tool for Labeling Sports Poses in Dataset}
+
+\blindtext
+
+\blindtext
+
+\blindtext
+
+\blindtext
+
+\blindtext
