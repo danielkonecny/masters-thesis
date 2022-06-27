@@ -1,0 +1,46 @@
+\chapter{\label{chap:classification}Classification of Sports Poses from Images}
+
+
+\blindtext
+
+\blindtext
+
+\section{Representing Sports Poses in Latent Space}
+
+To obtain embeddings of the images, a convolutional neural network is used. This thesis uses a ResNet architecture with weights trained on ImageNet dataset. The head of the network is replaced to provide embeddings as vectors in $d$-dimensional latent space. The network is trained on triplet loss in the self-supervised manner.
+
+\subsection{Neural Network Trained with Triplet Loss}
+
+\blindtext
+
+\blindtext
+
+\begin{figure*}[ht]\centering
+  \centering
+  \includegraphics{figures/placeholder.pdf}
+  \caption{All combinations of triplets in a grid. Maybe draw as arrows across the grid.}
+  \label{TripletsInGrid}
+\end{figure*}
+
+\blindtext
+
+\section{Models for Sports Pose Classification from Embeddings}
+
+The sports poses are encoded as $d$-dimensional latent vectors. Then, simple models that solve the classification problem are proposed. These models do not require many annotated samples to have good performance. After that, more advanced models are proposed.
+\blindtext
+
+\blindtext
+
+\subsection{K-Nearest Neighbors Classifier}
+
+K-nearest neighbors classifier is try to find the prevailing class of the nearest latent vectors to classify the new sample.
+\blindtext
+
+\blindtext
+
+\subsection{Neural Networks with Dense Layers}
+
+The sports pose latent vector classification can be solved with more advanced models, such as neural networks with dense layers.
+\blindtext
+
+\blindtext

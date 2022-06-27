@@ -368,20 +368,14 @@ The triplet selection is an important part of the whole training process. When t
     \argmin_{x^{n}_{i}}{{|| f(x^{a}_{i}) - f(x^{n}_{i}) ||}^{2}_{2}}.
 \end{equation}
 
-In this thesis, with time-contrastive learning method, hard triplets cannot be computed in any way. Hard positive pair is enforced by making the viewpoints of the images as different as possible. Since anchor and positive images are taken from different viewpoints, the background of the scene and light conditions can vary. Also, just by filming the scene from different angles, the object can look completely different. Hard negative pair condition can be fulfilled by choosing image from the same viewpoint as for the anchor image but with a slightly different timestamp. How much should the timestamp differ depends on the scene itself. If it is very dynamic, the images can be just few frames apart, if it stays the same for a longer time, a different approach has to be chosen. One possibility to choose a hard negative pair from video is by computing optical flow from the video and use it to detect movement.
+In this thesis, with time-contrastive learning method, hard triplets cannot be computed in any way. Hard positive pair is enforced by making the viewpoints of the images as different as possible. Since anchor and positive images are taken from different viewpoints, the background of the scene and light conditions can vary. Also, just by filming the scene from different angles, the object can look completely different. Hard negative pair condition can be fulfilled by choosing image from the same viewpoint as for the anchor image but with a slightly different timestamp. How much should the timestamp differ depends on the scene itself. If it is very dynamic, the images can be just few frames apart, if it stays the same for a longer time, a different approach has to be chosen. One possibility to choose a hard negative pair from video is by computing optical flow from the video and use it to detect movement. This procedure is thoroughly discussed in section \todo{number from chapter 3}.
 
-\subsection{Multi-Class N-Pair Loss}
+\subsection{Other Metric Learning Loss Functions}
 
-\blindtext
+Triplet loss is not the only possible loss function that can be used to construct an embedding space with neural network. There are several other functions for metric learning that can be applied to the same task that is being solved in this thesis. These alternative functions are proposed as a possibility for future work on the project and are not implemented.
 
-\blindtext
+Lifted Structure Loss is a good candidate for an alternative to the triplet loss function \cite{lifted-structure}. It uses similar format of the training data -- anchor, positive and negative samples. The difference is that it utilizes multiple negative samples at once and thus provides faster convergence. It is fairly easy to provide higher number of negative samples, since frames before and after the timestamp of anchor-positive pair from all viewpoints are candidates for negatives.
 
-\blindtext
+Multi-Class N-Pair Loss is very similar to lifted structure loss in the sense that it uses multiple negative samples but it differs in what it tries to optimize \cite{multiclass-NIPS2016_6b180037}. It computes cosine similarity between features of the data points and tends to be scale-invariant. 
 
-\subsection{Lifted Structured Feature Embedding}
-
-\blindtext
-
-\blindtext
-
-\blindtext
+While triplet and lifted structure losses both use relative distance as a metric, angular loss accounts for angle at the negative edge of the triplet triangle \cite{angular-loss}. It drags negative data point away from the anchor-positive pair. The pair is on the other hand pushed closer together. This metric also benefits from scale invariance. The advantage over triplet loss is easier setting of margin as a hyperparameter. Margin for triplet loss depends on the intra-class variance of data while margin angle for angular loss is invariant of such property.

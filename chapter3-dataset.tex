@@ -1,103 +1,144 @@
 \chapter{\label{chap:dataset}Obtaining Datasets for Self-Supervised Learning}
 
-Datasets for self-supervised learning in general can be very different from each other, their form depends on the task that is being solved and the way of achieving the self-supervision. Although, all of them have one thing in common -- they mainly consist of unannotated data and need smaller amount annotated data to be able to classify new samples well.
+Datasets for self-supervised learning in general can be very different from each other, their form depends on the task that is being solved and the way of achieving the self-supervision. Although, all of them have one thing in common -- they mainly consist of unannotated data and at the end, they need smaller amount of annotated data to be able to classify from learned embeddings.
 
-\todo{How datasets for self-supervised learning differ from other datasets.}
-\blindtext
+As is mentioned in the section \ref{sec:self-supervised}, this thesis focuses on Time-Contrastive Learning (TCL), which means that it achieves supervision with multiple viewpoints of the same scene concurrently as is displayed in the figure \ref{fig:scene-multiple-cameras}. While the filmed object may look very different when filmed from different angles, it is still the same object if the timestamps are identical. It is also possible to use moving cameras for filming of the scene, although this might introduce some inaccuracy to movement detection. On the other hand, even when the viewpoint is equivalent, the object can be altered only after a short time has passed. This characteristic holds supervision when TCL is used and because no extra work (e.g. labeling) has to be done, the data is supervised by itself -- self-supervised. The only restriction is the need to have multiple videos of the same scene synchronized in time.
 
-\blindtext
-
-\section{Multiple Cameras Filming a Scene from Multiple Viewpoints}
-
-Self-supervision can be achieved by filming a scene from different viewpoints and using the synchronized footage as a supervision.
-\blindtext
-
-This thesis proposes a tool for automatic synchronization of multiple videos. It also offers few simple editing features as cropping and trimming. Finally, the tool generates tuples of images sorted into triplets that are ready to be used for training. Cross-platform video conversion solution \texttt{FFmpeg} is used to handle all video modifications effectively. The individual parts of the editing tool are presented in the following subsections in the order of their execution. 
-
-The tool was designed to fit the needs of this thesis during the time the datasets for experiments were created.
-\blindtext
-
-\begin{figure*}[ht]\centering
-  \centering
-  \includegraphics[width=\linewidth,height=2in]{figures/placeholder.pdf}
-  \caption{Scene filmed by 3 cameras from different angles, maybe draw simply a real scene in Illustrator or just take a photo of filming a real scene.}
-  \label{SceneMultipleCameras}
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\linewidth,height=2in]{figures/placeholder.pdf}
+    \caption{Scene filmed by 3 cameras from different angles, maybe draw simply a real scene in Illustrator or just take a photo of filming a real scene.}
+    \label{fig:scene-multiple-cameras}
 \end{figure*}
 
-\todo{...cameras can move during the recording of the scene, they do not need to be steady (but the optical flow synchronization might not work)...}
-\blindtext
+It is necessary to have the process of dataset creation as automated as possible. Otherwise it would have been easier to just label the data and simply use supervised learning approach. Therefore, I propose a set of tools in section \ref{sec:dataset-self-tool} that creates a dataset ready for TCL with just a small amount of user interaction. After that, a simple tool for labeling images is presented in section \ref{sec:dataset-label-tool}, because at least a small number of images with assigned class is always necessary.
 
-\blindtext
+At the end of this chapter in section \ref{sec:basic-dataset}, a basic dataset of sports poses is presented. It contains scenes with solid background and sports poses with variance only in arm movement and it was captured and prepared especially for this thesis. The basic sports pose dataset was demonstratively prepared only with tools described below. Finally, possible directions of development of dataset with advanced sports poses are discussed.
 
-\begin{figure*}[ht]\centering
-  \centering
-  \includegraphics[width=\linewidth,height=1.5in]{figures/placeholder.pdf}
-  \caption{Diagram with flow how the video is processed into a dataset. Crop -> Synchronize -> ...}
-  \label{DatasetPreparation}
+\section{\label{sec:dataset-self-tool}Creating Dataset for Time-Contrastive Learning}
+
+Dataset for Time-Contrastive Learning (TCL) is created from synchronized videos of the same scene filmed from different angles. I propose a tool for semi-automatic preparation of such dataset, illustrated in the figure \ref{fig:dataset-preparation}. It offers few simple editing features as cropping and trimming. Very important feature it provides is automatic synchronization of multiple videos. The second necessary component is a movement detector that estimates how much movement happened between frames of the video. This information is essential to achieve the time contrast that TCL relies on. Finally, the tool exports chosen video frames with their timestamps to simplify creating of triplets for model training.
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\linewidth,height=1.5in]{figures/placeholder.pdf}
+    \caption{Diagram with flow how the video is processed into a dataset. Crop -> Synchronize -> ...}
+    \label{fig:dataset-preparation}
 \end{figure*}
 
-\blindtext
+Cross-platform video conversion solution \texttt{FFmpeg} is used to handle all video modifications effectively. Videos can be either processed directly with \texttt{FFmpeg} or a script is created that does the identical operations but can be launched later. The individual parts of the editing tool are presented in the following subsections in the order of their execution.
 
 \subsection{Preparing Videos Filmed with Various Cameras}
 
-At first, the videos can be cropped and trimmed to contain only the important parts of the scene.
-\blindtext
+The first step in dataset preparation is to trim the start and the end of the video. It is almost certain that the video contains a little bit of inapplicable footage at the beginning and at the end. Therefore, a simple tool that allows user to select the trim range with sliders is developed for the purpose of this thesis. Because of how the synchronization tool works, user only needs to crop one of the videos, the others will be cropped automatically when being synchronized. This is further described in section \ref{sec:dataset-sync}.
 
-In most cases, the video's resolution does not match the input of the model and has to be scaled down and is often also cropped to correct ratio. The tool allows the user to select a bounding box around the scene that has to be included in the dataset and computes the correct crop coordinates to match the input of the network.
+In most cases, the video's resolution does not match the input of the model and has to be scaled down and is often also cropped to correct ratio. The tool allows user to select a bounding box around the scene which will always be included in the cropped video and non-important parts of the scene will mostly be deleted. Correct crop coordinates are automatically computed to match the input of the network and all other constraints. The computation consists of these operations and their order is important.
 
-\todo{Describe all operations and constraints of cropping.}
-\blindtext
+\begin{enumerate}
+    \item A view of the video as a single image is constructed from 10 merged frames taken out of the whole video in order to provide user with enough information about the range of motion.
+    \item User selects the part of the scene that has to be included in the cropped video with a bounding box, these are the initial crop coordinates.
+    \item Crop coordinates are adjusted to match the $height \times width$ ratio of the model input.
+    \item If crop selection has lower resolution than the network input, the selection is equally extended.
+    \item If crop selection exceeds the frame size, it is decreased to the closest possible value.
+    \item If crop selection is positioned out of the frame, it is moved to the closest correct position.
+\end{enumerate}
 
-The user is also allowed to trim the start and/or the end of the video.
-\todo{To crop the garbage at the beginning and at the end.}
-\blindtext
+Crop coordinates are correctly computed to match the model input $height \times width$ ratio but the resolution will most likely not match. Therefore, the video has to be scaled down or (in case of video having lower resolution than model input) scaled up. Lastly, framerate of all of the videos has to be unified to a previously chosen fixed value to ensure correct run of synchronization and motion detection algorithms.
 
-\subsection{Synchronizing Videos Using Optical Flow Data}
+\subsection{\label{sec:dataset-sync}Synchronizing Videos with Dense Optical Flow}
 
-The tool computes optical flow for each video. Since optical flow information is computed for each pixel and has 4 directions, the data are aggregated over all pixels in the video for each of 4 directions separately. Afterwards, correlation is computed over all possible overlaps of the videos to find the best fit. Finally, videos are trimmed at the beginning and at the end to have the same length and are thus synchronized because of the correct trim times.
+The main requirement for TCL to work is synchronization of all used videos. It is very likely that not all used videos are perfectly synchronized and manual synchronization would not be very precise nor effortless. Therefore, I present an automatic tool that determines the correct synchronization and trims all videos at the beginning and at the end so that all are the same length and are synchronized.
 
-\blindtext
+The synchronization is done with dense optical flow, which is information about the movement of each pixel between video frames \cite{HORN1981185}. The assumption behind using dense optical flow for synchronization is that videos of the same scene have correlative amount of movement in similar directions at the same time. The precise movement of each pixel cannot be easily computed, it is only possible to approximate it. However, the precise values are not necessary for synchronization purposes, rough values are accurate enough.
 
-\begin{figure*}[ht]\centering
-  \centering
-  \includegraphics{figures/placeholder.pdf}
-  \caption{Visualize somehow the amount of flow in all directions in different videos and how they are synchronized. Video as a single line and with some offset from other videos.}
-  \label{VideoSynchronization}
+Movement vector of each pixel is from two reasons too specific for this task. First reason is that each video displays the scene from different angle and their optical flows will most likely be different. It is more useful to have general information about movement in the whole frame than to have it pixel-wise to eliminate small discrepancies. The second reason to aggregate information over the whole frame is growing computational complexity. If the information is accumulated over all pixels into a fixed number of values, the computational complexity stays constant, whereas it grows when pixel motion values are used individually. 
+
+Since all pixels can move in two dimensions, it would make sense to gather information about horizontal and vertical movement by simply summing up all the values. Problem with this approach is that when some pixels move to the right and some to the left, their movement vectors subtract from each other in that dimension and a lot of information is lost. For that reason, I propose to sum separately positive and negative values in each dimension and obtain information about amount of motion in 4 directions -- up, down, left and right. Each frame (except the first one) of each video is assigned these 4 values describing the optical flow from the previous frame to the current one.
+
+After that, Pearson correlation of the aggregated optical flows of video pairs has to be done. These are not computed for all pair combinations, all flows are only compared to the shortest one to perform a smaller number of computations but still guarantee to get the best possible synchronization. Each flow pair is compared to get overlap with the highest correlation, that means correlation for each possible overlap is computed. Only restriction is that the overlap has to be at least a certain number of frames long to eliminate corner cases where for example only one frame has the best correlation (the first frame from one video and the last one from another). This minimal overlap length can be a little lower than what the expected length of synchronized videos is to optimize for the lowest number of correlations that has to be done. By default, it is set to 1000 frames.
+
+Each overlap is assigned a specific index that will be used to describe it in the following text. The problem is that overlap index with the highest correlation might not be the correct one that synchronizes the videos because of some inaccuracy. To eliminate this problem, one additional property can be used -- if the correlations are computed accurately, the highest ones will be of overlap indices from similar range, just a few frames apart. To use this property, overlap indices are sorted descending by correlation and top 10 are taken. Standard deviation of these samples is computed and if it exceeds 10, it means that there is at least one overlap index among them that does not fit the majority. All these indices are checked and if they are further than one standard deviation from the mean, they are removed from this list. This operation is repeated until the standard deviation of the whole list is lower than 10. After that, the index with the highest correlation that is still in the list is the best one for synchronization. Real data example of this algorithm is provided in table \ref{tab:correlation-pick}.
+
+\begin{table}[!ht]
+    \begin{center}
+        \begin{tabular}{ |c|c|c|c| }
+            \hline
+            State & \makecell{Best overlap indices \\ (descending by correlation)} & Allowed range & \makecell{Standard \\ deviation (SD)} \\
+            \hline
+            \hline
+                Initial & \makecell{\textcolor{red}{2882}, 1410, 1543, 1692, 1691,\\1693, 1690, 1694, 1388, 1695} & $(1339, 2137)$ & \textcolor{red}{$398.7 > 10$} \\
+            \hline
+                1st epoch & \makecell{\textcolor{red}{1410}, 1543, 1692, 1691, 1693,\\1690, 1694, \textcolor{red}{1388}, 1695} & $(1488, 1733)$ & \textcolor{red}{$122.3 > 10$} \\
+            \hline
+                2nd epoch & \makecell{\textcolor{red}{1543}, 1692, 1691, 1693, 1690,\\1694, 1695} & $(1618, 1724)$ & \textcolor{red}{$52.3 > 10$} \\
+            \hline
+                3rd epoch & \makecell{\textcolor{green}{1692}, 1691, 1693, 1690, 1694,\\1695} & \makecell{Any -- SD \\ condition satisfied} & \textcolor{green}{$1.7 < 10$} \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \caption{Example of real data from algorithm that tries to find the correct overlap index of two flows to have them correlate as much as possible. The algorithm needed 3 epochs to remove indices that had no other surrounding ones and, therefore, were detected as false findings. These indices are out of the allowed range, while the other were close to each other and in the allowed range. Index 1692 had the best correlation and was chosen as the best overlap index.}
+    \label{tab:correlation-pick}
+\end{table}
+
+When the best overlap indices for the flow pairs are computed, flows are shortened to the same length where all of them overlapped. Their respective videos are trimmed at the beginning and at the end to have the same length as well and are thus synchronized because of the correct trim times.
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics{figures/placeholder.pdf}
+    \caption{Visualize somehow the amount of flow in all directions in different videos and how they are synchronized. Video as a single line and with some offset from other videos.}
+    \label{fig:video-synchronization}
 \end{figure*}
 
-\subsection{Generating Dataset from Synchronized Videos}
+\subsection{Detecting Movement with Sparse Optical Flow}
 
-The tool can generate tuples of anchor, positive and negative images from which the model can extract multiple triplets to achieve effective loading of training samples.
-\blindtext
+After videos of a scene are synchronized, the last step in creating the dataset is choosing the correct frames to be used for training of a neural network model. These frames have to satisfy one property -- there has to be enough movement between them for a model to be able to recognize the difference. The less movement is between the frames, the harder it will be for the model to learn embeddings of the filmed object but also the more precise the embeddings might be. It is necessary to set the movement threshold to a correct value since the dataset quality is crucial for the model's performance.
 
-\blindtext
+I decided to use Sparse Optical Flow to fulfill the movement detection task. While Dense Optical Flow tracks every pixel in the image, the sparse variant chooses only some pixels with Shi-Tomasi corner detector and those are being tracked \cite{shi-tomasi-323794}. The amount of movement has to be ideally aggregated into a single number and summed frame after frame until it exceeds a certain threshold. Then, enough motion has been detected and the given frame is selected and motion detection continues again from zero to detect another frame. This procedure dynamically chooses the gap between chosen frames, which is essential for sports pose recognition. It is possible that at some times no movement is performed for a few seconds and right after that is a section with quick motion.
 
-\begin{figure*}[ht]\centering
-  \centering
-  \includegraphics{figures/placeholder.pdf}
-  \caption{Single images put into a grid.}
-  \label{GridOfImages}
+The challenging task is aggregating the information from sparse optical flow to a valuable metric. Since each scene can be different, the number of tracked pixels can also vary. Therefore, the distances cannot be easily summed but rather averaged. Another problem is introduced when the background of the scene is not solid and some of the tracked pixels are in the background. Those do not move and they should not influence the average distance of pixel movement. This is solved by calculating average of only those pixels, whose movement is above a certain threshold.
+
+One more problem that was encountered during the development of motion detection algorithm was vanishing of monitored pixels. After a higher amount of movement, the pixels detected to be followed might get lost and there are not enough pixels left to precisely detect motion. When this happens, Shi-Tomasi corner detector has to be run again to detect new pixels for the sparse optical flow.
+
+The last feature that the motion detector uses to provide more accurate results is accounting only for unique moves. If all pixels move the same way, that means the scene has changed but the sports pose probably did not change at all. This problem also has to be addressed. The motion detector does so by computing a cosine similarity between all motion vectors produced by sparse optical flow and ignores those vectors that are too similar.
+
+Detected frames from the video are saved as images and will be used for self-supervised learning of a neural network. The motion detection has to be run prior to the learning procedure to enable for shuffling of training data and also to make loading of dataset less computationally demanding.
+
+\subsection{Building Triplets from Video Frames}
+
+Neural network used in this thesis is trained with triplet loss function and, therefore, it has to be provided with 2 data samples of the same pose from a different viewpoint and 1 sample of a different pose from the same viewpoint as one of the previous two. The goal is to provide the network with batches of such triplets.
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics{figures/placeholder.pdf}
+    \caption{Single images put into a grid.}
+    \label{fig:grid-of-images}
 \end{figure*}
 
+At first, file paths to the correct images are formed into triplets and then into batches. After that, file paths are replaced with images that they were pointing at. Dataset of batches of triplets is then shuffled and split into training and validation subsets. Before each epoch, the training subset is always shuffled again to provide for higher variability.
+
+\subsection{\label{sec:dataset-label-tool}Tool for Labeling Sports Poses in Dataset}
+
+Even though the main advantage of self-supervision is that very few annotated training samples are needed, there is still a need for some of them. That is why I decided to also develop a tool for very fast and easy labeling of training samples. This labeling tool takes a directory with unsorted images as an input and moves them to their respective directories named after their label.
+
+If launched for the first time, new classes have to be assigned to specific keys and then with just a single press of the key, displayed image is assigned to its class. This procedure makes image labeling as minimalistic as possible. Key-class pairs are saved as a dictionary to a file that can be loaded anytime to continue with annotating of images.
+
+\section{\label{sec:basic-dataset}Dataset of Basic Sports Poses}
+
+For the development of the self-supervised model in this thesis, I recorded and prepared a dataset of simplified sports poses...
 \blindtext
 
-\section{Annotated Data for Sports Pose Recognition}
+\blindtext
+
+\blindtext
+
+\blindtext
+
+\subsection{Possible Development with Yoga Poses}
+
+Yoga poses are one the most complex among all sports poses...
+\blindtext
 
 Yoga-82 dataset contains over 28 400 annotated samples of 82 different yoga poses.
-\blindtext
-
-\blindtext
-
-\blindtext
-
-\blindtext
-
-\blindtext
-
-\section{Tool for Labeling Sports Poses in Dataset}
-
-\blindtext
-
 \blindtext
 
 \blindtext
