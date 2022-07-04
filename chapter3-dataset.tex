@@ -4,10 +4,25 @@ Datasets for self-supervised learning in general can be very different from each
 
 As is mentioned in the section \ref{sec:self-supervised}, this thesis focuses on Time-Contrastive Learning (TCL), which means that it achieves supervision with multiple viewpoints of the same scene concurrently as is displayed in the figure \ref{fig:scene-multiple-cameras}. While the filmed object may look very different when filmed from different angles, it is still the same object if the timestamps are identical. It is also possible to use moving cameras for filming of the scene, although this might introduce some inaccuracy to movement detection. On the other hand, even when the viewpoint is equivalent, the object can be altered only after a short time has passed. This characteristic holds supervision when TCL is used and because no extra work (e.g. labeling) has to be done, the data is supervised by itself -- self-supervised. The only restriction is the need to have multiple videos of the same scene synchronized in time.
 
-\begin{figure*}[ht]
+\begin{figure*}[ht!]
     \centering
-    \includegraphics[width=\linewidth,height=2in]{figures/placeholder.pdf}
-    \caption{Scene filmed by 3 cameras from different angles, maybe draw simply a real scene in Illustrator or just take a photo of filming a real scene.}
+
+    \tikzstyle{scene} = [ellipse, minimum width=3cm, minimum height=2cm, text centered, draw=black]
+    \tikzstyle{camera} = [rectangle, minimum width=2cm, minimum height=1cm, text centered, draw=black]
+    \tikzstyle{arrow} = [thick,->,>=stealth]
+
+    \begin{tikzpicture}[node distance=1.5cm]    
+        \node (scene) [scene] {Scene};
+        \node (cam2) [camera, below of=scene, yshift=-2cm] {Camera 2};        
+        \node (cam1) [camera, left of=cam2, xshift=-2cm, yshift=1cm, rotate around={-50:(0,0)}] {Camera 1};
+        \node (cam3) [camera, right of=scene, xshift=4cm, rotate around={90:(0,0)}] {Camera 3};
+
+        \draw [arrow] (cam1) -- (scene);
+        \draw [arrow] (cam2) -- (scene);
+        \draw [arrow] (cam3) -- (scene);
+    \end{tikzpicture}
+    
+    \caption{Example of a scene filmed from different viewpoints with 3 cameras. With higher number of viewpoints is achieved greater variability in the dataset for time-contrastive learning.}
     \label{fig:scene-multiple-cameras}
 \end{figure*}
 
@@ -19,10 +34,64 @@ At the end of this chapter, in section \ref{sec:dataset-sports-poses}, a basic d
 
 Dataset for Time-Contrastive Learning (TCL) is created from synchronized videos of the same scene filmed from different angles. I propose a tool for semi-automatic preparation of such dataset, illustrated in the figure \ref{fig:dataset-preparation}. It offers few simple editing features as cropping and trimming. Very important feature it provides is automatic synchronization of multiple videos. The second necessary component is a movement detector that estimates how much movement happened between frames of the video. This information is essential to achieve the time contrast that TCL relies on. Finally, the tool exports chosen video frames with their timestamps to simplify creating of triplets for model training.
 
-\begin{figure*}[ht]
+\begin{figure*}[ht!]
     \centering
-    \includegraphics[width=\linewidth,height=1.5in]{figures/placeholder.pdf}
-    \caption{Diagram with flow how the video is processed into a dataset. Crop -> Synchronize -> ...}
+
+    \tikzset{diagonal fill/.style 2 args={
+        fill=#1,
+        path picture={
+            \fill[#2, sharp corners] (path picture bounding box.south west) -| (path picture bounding box.north east) -- cycle;
+        }
+    }}
+    \tikzstyle{io} = [rectangle, minimum width=1cm, minimum height=1cm,text centered, draw=black]
+    \tikzstyle{manual} = [rectangle, minimum width=1.5cm, minimum height=1cm,text centered, draw=black, fill=red!30]
+    \tikzstyle{semi} = [rectangle, minimum width=1.5cm, minimum height=1cm,text centered, draw=black, diagonal fill={red!30}{blue!30}]
+    \tikzstyle{automatic} = [rectangle, minimum width=2cm, minimum height=1cm,text centered, draw=black, fill=blue!30]
+    \tikzstyle{arrow} = [thick,->,>=stealth]
+
+    \begin{tikzpicture}[node distance=1.5cm, scale=0.8, every node/.style={scale=0.8}]    
+        \node (input1) [io, text width=1.5cm] {Raw Video 1};
+        \node (input2) [io, below of=input1, text width=1.5cm] {Raw Video 2};
+        \node (input3) [io, below of=input2, text width=1.5cm] {Raw Video 3};
+
+        \node (trim1) [manual, right of=input1, xshift=1cm] {Trim};
+        
+        \node (crop1) [semi, right of=trim1, xshift=1cm] {Crop};
+        \node (crop2) [semi, below of=crop1] {Crop};
+        \node (crop3) [semi, below of=crop2] {Crop};
+
+        \node (sync) [automatic, right of=crop2, xshift=1.5cm] {Synchronize};
+
+        \node (output1) [io, right of=sync, above of=sync, xshift=2cm, text width=2cm] {Synced Video 1};
+        \node (output2) [io, below of=output1, text width=2cm] {Synced Video 2};
+        \node (output3) [io, below of=output2, text width=2cm] {Synced Video 3};
+
+        \node (motion) [automatic, right of=output2, xshift=1.75cm, text width=2cm] {Detect Motion};
+
+        \node (dataset) [io, right of=motion, xshift=1cm] {Dataset};
+
+        \draw [arrow] (input1) -- (trim1);
+
+        \draw [arrow] (trim1) -- (crop1);
+        \draw [arrow] (input2) -- (crop2);
+        \draw [arrow] (input3) -- (crop3);
+
+        \draw [arrow] (crop1.east) -- ([yshift=0.2 cm]sync.west);
+        \draw [arrow] (crop2.east) -- (sync.west);
+        \draw [arrow] (crop3.east) -- ([yshift=-0.2 cm]sync.west);
+
+        \draw [arrow] ([yshift=0.2 cm]sync.east) -- (output1.west);
+        \draw [arrow] (sync) -- (output2);
+        \draw [arrow] ([yshift=-0.2 cm]sync.east) -- (output3.west);
+
+        \draw [arrow] (output1.east) -- ([yshift=0.2 cm]motion.west);
+        \draw [arrow] (output2.east) -- (motion.west);
+        \draw [arrow] (output3.east) -- ([yshift=-0.2 cm]motion.west);
+        
+        \draw [arrow] (motion) -- (dataset);
+    \end{tikzpicture}
+    
+    \caption{Tools for construction of dataset presented in the order of their usage. White boxes represent data and colored boxes the tools. Red color symbolizes tools that need some user interaction whereas blue colored tools are fully automatic. Tool for cropping needs a user to select a specific area but then it automatically adjusts the selection to fit all needs.}
     \label{fig:dataset-preparation}
 \end{figure*}
 
@@ -30,7 +99,7 @@ Cross-platform video conversion solution \texttt{FFmpeg} is used to handle all v
 
 \subsection{Preparing Videos Filmed with Various Cameras}
 
-The first step in dataset preparation is to trim the start and the end of the video. It is almost certain that the video contains a little bit of inapplicable footage at the beginning and at the end. Therefore, a simple tool that allows user to select the trim range with sliders is developed for the purpose of this thesis. Because of how the synchronization tool works, user only needs to crop one of the videos, the others will be cropped automatically when being synchronized. This is further described in section \ref{sec:dataset-sync}.
+The first step in dataset preparation is to trim the start and the end of the video. It is almost certain that the video contains a little bit of inapplicable footage at the beginning and at the end. Therefore, a simple tool that allows user to select the trim range with sliders is developed for the purpose of this thesis. Because of how the synchronization tool works, user only needs to trim one of the videos, the others will be trimmed automatically when being synchronized. This is further described in section \ref{sec:dataset-sync}.
 
 In most cases, the video's resolution does not match the input of the model and has to be scaled down and is often also cropped to correct ratio. The tool allows user to select a bounding box around the scene which will always be included in the cropped video and non-important parts of the scene will mostly be deleted. Correct crop coordinates are automatically computed to match the input of the network and all other constraints. The computation consists of these operations and their order is important.
 
@@ -49,7 +118,32 @@ Crop coordinates are correctly computed to match the model input $height \times 
 
 The main requirement for TCL to work is synchronization of all used videos. It is very likely that not all used videos are perfectly synchronized and manual synchronization would not be very precise nor effortless. Therefore, I present an automatic tool that determines the correct synchronization and trims all videos at the beginning and at the end so that all are the same length and are synchronized.
 
-The synchronization is done with dense optical flow, which is information about the movement of each pixel between video frames \cite{HORN1981185}. The assumption behind using dense optical flow for synchronization is that videos of the same scene have correlative amount of movement in similar directions at the same time. The precise movement of each pixel cannot be easily computed, it is only possible to approximate it. However, the precise values are not necessary for synchronization purposes, rough values are accurate enough.
+The synchronization is done with dense optical flow, which is information about the movement of each pixel between video frames \cite{HORN1981185}. Visualization of dense optical flow is shown in the figure \ref{fig:optical-flow}. The assumption behind using dense optical flow for synchronization is that videos of the same scene have correlative amount of movement in similar directions at the same time. The precise movement of each pixel cannot be easily computed, it is only possible to approximate it. However, the precise values are not necessary for synchronization purposes, rough values are accurate enough.
+
+\begin{figure*}[!ht]
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/image000000312.png}
+        \caption{}
+        \label{fig:optical-flow-a}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/image000000386.png}
+        \caption{}
+        \label{fig:optical-flow-b}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/image000001127.png}
+        \caption{}
+        \label{fig:optical-flow-c}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/image000001664.png}
+        \caption{}
+        \label{fig:optical-flow-d}
+    \end{subfigure}
+    \caption{Dense Optical Flow visualized on multiple frames from the same video where a person is moving his arms. Visualization \ref{fig:optical-flow-a} shows both arms moving up while \ref{fig:optical-flow-b} captures both arms moving down. As can be deduced, visualization \ref{fig:optical-flow-c} is a combination of the previous two -- one arm is moving up and the other one down. Graphics \ref{fig:optical-flow-d} displays only forearms moving closer to each other while the elbows stay in place. All other parts of the frames stay steady.}
+    \label{fig:optical-flow}
+\end{figure*}
 
 Movement vector of each pixel is from two reasons too specific for this task. First reason is that each video displays the scene from different angle and their optical flows will most likely be different. It is more useful to have general information about movement in the whole frame than to have it pixel-wise to eliminate small discrepancies. The second reason to aggregate information over the whole frame is growing computational complexity. If the information is accumulated over all pixels into a fixed number of values, the computational complexity stays constant, whereas it grows when pixel motion values are used individually. 
 
@@ -82,13 +176,6 @@ Each overlap is assigned a specific index that will be used to describe it in th
 
 When the best overlap indices for the flow pairs are computed, flows are shortened to the same length where all of them overlapped. Their respective videos are trimmed at the beginning and at the end to have the same length as well and are thus synchronized because of the correct trim times.
 
-\begin{figure*}[ht]
-    \centering
-    \includegraphics{figures/placeholder.pdf}
-    \caption{Visualize somehow the amount of flow in all directions in different videos and how they are synchronized. Video as a single line and with some offset from other videos.}
-    \label{fig:video-synchronization}
-\end{figure*}
-
 \subsection{Detecting Movement with Sparse Optical Flow}
 
 After videos of a scene are synchronized, the last step in creating the dataset is choosing the correct frames to be used for training of a neural network model. These frames have to satisfy one property -- there has to be enough movement between them for a model to be able to recognize the difference. The less movement is between the frames, the harder it will be for the model to learn embeddings of the filmed object but also the more precise the embeddings might be. It is necessary to set the movement threshold to a correct value since the dataset quality is crucial for the model's performance.
@@ -109,13 +196,6 @@ Detected frames from the video are saved as images and will be used for self-sup
 
 Neural network used in this thesis is trained with triplet loss function and, therefore, it has to be provided with 2 data samples of the same pose from a different viewpoint and 1 sample of a different pose from the same viewpoint as one of the previous two. The goal is to provide the network with batches of such triplets.
 
-\begin{figure*}[ht]
-    \centering
-    \includegraphics{figures/placeholder.pdf}
-    \caption{Single images put into a grid.}
-    \label{fig:grid-of-images}
-\end{figure*}
-
 At first, file paths to the correct images are formed into triplets and then into batches. After that, file paths are replaced with images that they were pointing at. Dataset of batches of triplets is then shuffled and split into training and validation subsets. Before each epoch, the training subset is always shuffled again to provide for higher variability.
 
 \subsection{\label{sec:dataset-label-tool}Tool for Labeling Sports Poses in Dataset}
@@ -132,10 +212,21 @@ Multiple sets of videos were recorded for developing of tools for dataset suitab
 
 One hand in different poses is a real world situation with pretty low variability, especially if the background is solid. Therefore, it is a good candidate for testing data for the dataset preparation tools and can be used for the testing of a self-supervised trained model during its development. The original videos are cropped so that only forearm and hand with fingers is in the frame to make them as elementary as possible. This dataset will be referred to as the Hand Dataset. Examples of its images are shown in the figure \ref{fig:dataset-hand-simple-example}.
 
-\begin{figure*}[ht]
-    \centering
-    \includegraphics{figures/placeholder.pdf}
-    \caption{Multiple different samples from the dataset.}
+\begin{figure*}[!ht]
+    \centerline{
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene003_cam2_image00025.png}
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene004_cam0_image00015.png}
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene005_cam2_image00080.png}
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene006_cam1_image00033.png}
+    }
+    \vspace{0.1cm}
+    \centerline{
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene007_cam2_image00028.png}
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene008_cam1_image00024.png}
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene009_cam0_image00010.png}
+        \includegraphics[scale=0.46]{figures/dataset_hand/scene010_cam1_image00019.png}
+    }
+    \caption{Hand Dataset images from different scenes. Some images have fairly solid background while the others have very heterogenous one to simulate various possible situations for the dataset preparation tools.}
     \label{fig:dataset-hand-simple-example}
 \end{figure*}
 
@@ -145,12 +236,36 @@ Following challenge was to obtain specific frames from the video used for traini
 
 \subsection{Sports Poses with Upper Body Movement}
 
-The Hand Dataset served its purpose in making of the dataset preparation tools and the next task is the development of the self-supervised model. I recorded and prepared a dataset of simplified sports poses that are less complicated than what would for example yoga poses look like but still have the character of sports poses. Example of a couple of poses can be seen in the figure \ref{fig:dataset-upper-body-example}. All of the recorded poses hold these conditions. The person is recorded from knees up and moving only its arms, while any bending of shoulders, elbows, wrists and fingers is allowed (and advised).
+The Hand Dataset served its purpose in making of the dataset preparation tools and the next task is the development of the self-supervised model. I recorded and prepared a dataset of simplified sports poses that are less complicated than what would for example yoga poses look like but still have the character of sports poses. Example of poses can be seen in the figure \ref{fig:dataset-upper-body-example}. All of the recorded poses hold these conditions. The person is recorded from knees up and moving only its arms, while any bending of shoulders, elbows, wrists and fingers is allowed (and advised).
 
-\begin{figure*}[ht]
-    \centering
-    \includegraphics{figures/placeholder.pdf}
-    \caption{Multiple different samples from the dataset.}
+\begin{figure*}[!ht]
+    \centerline{
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene026_cam1_image00169.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene024_cam1_image00077.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene025_cam0_image00037.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene020_cam2_image00019.png}
+    }
+    \vspace{0.1cm}
+    \centerline{
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene022_cam2_image00066.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene029_cam2_image00153.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene023_cam1_image00006.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene028_cam0_image00224.png}
+    }
+    \centerline{
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene026_cam0_image00182.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene020_cam0_image00026.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene027_cam2_image00022.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene021_cam0_image00006.png}
+    }
+    \vspace{0.1cm}
+    \centerline{
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene023_cam1_image00035.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene028_cam0_image00247.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene021_cam0_image00044.png}
+        \includegraphics[scale=0.46]{figures/dataset_upper_body/scene029_cam1_image00142.png}
+    }
+    \caption{Samples from dataset with upper body poses. Recordings come from 2 places, each with 5 videos with different clothing. The scenes are recorded with 3 cameras from different viewpoints.}
     \label{fig:dataset-upper-body-example}
 \end{figure*}
 

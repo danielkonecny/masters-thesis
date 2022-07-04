@@ -25,10 +25,10 @@ This obstacle can be overcome by having the ML model discover not only mapping o
 These networks consist of neurons -- logistic regressions. Its non-linear function can be adjusted to fit the needs of a specific task and it is often referred to as activation function. The capability to solve complex problems arises from structuring of simple neurons into groups called layers, illustrated in the figure \ref{fig:network-with-neuron}. The key is not doing the mapping of abstract features in one task but dividing it into multiple simple mappings. The input layer, also called visible layer because its data can be easily observed, provides data to the following layer. First simple mapping is done by the second layer and each following layer uses the mappings of its predecessor to obtain more complex information from the data. These following layers are also called hidden because their values are not given in the data, they have to be determined by the model. Finally, the last layer provides outputs in a format specified by its activation function.
 
 \begin{figure*}[ht]\centering
-    \label{fig:network-with-neuron}
     \centering
     \includegraphics[scale=0.55]{figures/neural_network_with_neuron.ai}
     \caption{Neural network with densely connected neurons and detailed explanation of one of them. Every neuron computes a simple weighted sum and non-linear operation on a set of inputs. Inputs are obtained from the previous layer or the raw data itself and outputs are then send to neurons in the following layer. No neurons cooperate with others in the same layer.}
+    \label{fig:network-with-neuron}
 \end{figure*}
 
 With tasks becoming more complicated, the number of layers is growing bigger. As there was increase in the depth of the graph, such networks were called deep neural networks and their usage was referred to as deep learning (DL).
