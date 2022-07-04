@@ -104,6 +104,112 @@ When focusing on each cluster individually, the data point distribution holds re
 
 \section{\label{sec:evaluate-encoder}Evaluation of Encoder on Validation Dataset}
 
+The encoder itself is just a single component in the whole model that performs the classification. Its performance cannot be easily measured like a normal classifier -- by counting how many of the validation data were correctly assigned their class. There are no ground truths to the inputs, no image of a sports pose has a correct nor false embedding. The only way to measure the encoder's performance is by comparing one embedding to another. If the objective is to have similar sports poses close to each other in the embedding space, the distances of embedding can be compared.
+
+The encoder is trained with a triplet loss function whose aim is to have two embeddings of different images of the same sports pose closer to each other than one embedding of a distinct pose. The distance between correct and false pairs should also be greater than some fixed value called margin. Therefore, the same function can be also used to evaluate the encoder. The only difference is that the margin is set to 0 while during the learning process, the value is above 0.
+
+The experiment, values, margin, val split, epochs, seed is same,...
+\blindtext
+
+\begin{figure}[!ht]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            title={Comparison of validation accuracy on different embedding dimensionalities},
+            ylabel={Accuracy on validation dataset},
+            xlabel={Embedding dimensionality},
+            boxplot/draw direction=y,
+            xmode=log,
+            log basis x={2},
+            xmin=8, xmax=1024,
+            xtick={16,32,64,128,256,512},
+            log ticks with fixed point,
+            ymin=0.95, ymax=1,
+            ytick={0.95, 0.96, 0.97, 0.975, 0.98, 0.99, 1},
+            y tick label style={
+                /pgf/number format/.cd,
+                    precision=3,
+                /tikz/.cd
+            },
+            ymajorgrids=true,
+            xmajorgrids=true,
+            grid style=dashed,
+            cycle list={{red}}
+        ]
+            \addplot+ [
+                boxplot prepared={
+                    draw position=16,
+                    lower whisker=0.9622,
+                    lower quartile=0.96415,
+                    median=0.9762,
+                    upper quartile=0.9801,
+                    upper whisker=0.9801,
+                    box extend=4
+                }
+            ] coordinates {};
+            \addplot+ [
+                boxplot prepared={
+                    draw position=32,
+                    lower whisker=0.9603,
+                    lower quartile=0.9606,
+                    median=0.9688,
+                    upper quartile=0.9782,
+                    upper whisker=0.9818,
+                    box extend=8
+                }
+            ] coordinates {};
+            \addplot+ [
+                boxplot prepared={
+                    draw position=64,
+                    lower whisker=0.9723,
+                    lower quartile=0.9746,
+                    median=0.9772,
+                    upper quartile=0.9806,
+                    upper whisker=0.9824,
+                    box extend=16
+                }
+            ] coordinates {};
+            \addplot+ [
+                boxplot prepared={
+                    draw position=128,
+                    lower whisker=0.9671,
+                    lower quartile=0.9689,
+                    median=0.9714,
+                    upper quartile=0.97465,
+                    upper whisker=0.9753,
+                    box extend=32
+                }
+            ] coordinates {};
+            \addplot+ [
+                boxplot prepared={
+                    draw position=256,
+                    lower whisker=0.9593,
+                    lower quartile=0.96335,
+                    median=0.9688,
+                    upper quartile=0.97445,
+                    upper whisker=0.9788,
+                    box extend=64
+                }
+            ] coordinates {};
+            \addplot+ [
+                boxplot prepared={
+                    draw position=512,
+                    lower whisker=0.9642,
+                    lower quartile=0.96435,
+                    median=0.9691,
+                    upper quartile=0.97445,
+                    upper whisker=0.9753,
+                    box extend=128
+                }
+            ] coordinates {};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{When an image of a sports pose is encoded into a vector in an embedding space, its dimensionality can play a role in the performance of the model. The encoder model was tested on a number of dimensions between 16 a 512. The best median accuracy on validation data had an embedding space with 64 dimensions.}
+    \label{fig:encoder-embedding}
+\end{figure}
+
+The results are influenced by the diversity of used dataset. More diverse dataset with complicated sports poses might produce better results on embedding space with higher number of dimensions. Therefore, it is advised to tune this hyperparameter to match the dataset complexity.
+
 \section{\label{sec:evaluate-classifier}Evaluation of Classifier on Validation Dataset}
 
 \section{\label{sec:comparison}Comparison of Self-Supervised and Supervised-Trained Models}
@@ -142,13 +248,13 @@ The model described in the previous chapter (\todo{chapter link}) is used as the
 
 Since each model is trained in a different way, it is not trivial to set the borderline for number of epochs used for training. For that reason, each model was trained for sufficient number of epochs after which it no longer improved on validation data. The self-supervised model consists of two parts -- the encoder which creates the embedding from an image and the recognizer which classifies the pose from the embedding. The encoder was trained for 30 epochs and the recognizer for 20 epochs. The encoder was trained once and stayed the same for the whole experiment while the recognizer was fitted for every dataset sample. The supervised model was trained for 50 epochs on each dataset sample.
 
-Dataset used for this experiment is thoroughly described in section \ref{sec:basic-dataset}. It contains 3804 images of 1268 poses, each captured from 3 different angles. The poses are not necessarily unique but the images differ in background and clothes of the person. Overall, there are 10 different scenes with 2 possible backgrounds and different clothing of the person in each of the scenes. The poses represent possible movements of person's arms in all directions and joints' bendings, other parts of the body such as torso, head or legs are not moving. Each image belongs to one of 4 classes that differ in position of arms -- left or right arm is pointing either down or up. Since some positions may be questionable, the rule of thumb during labeling of data was whether the wrist is above or below the corresponding shoulder.
+Dataset used for this experiment is thoroughly described in section \ref{sec:dataset-sports-poses}. It contains 3804 images of 1268 poses, each captured from 3 different angles. The poses are not necessarily unique but the images differ in background and clothes of the person. Overall, there are 10 different scenes with 2 possible backgrounds and different clothing of the person in each of the scenes. The poses represent possible movements of person's arms in all directions and joints' bendings, other parts of the body such as torso, head or legs are not moving. Each image belongs to one of 4 classes that differ in position of arms -- left or right arm is pointing either down or up. Since some positions may be questionable, the rule of thumb during labeling of data was whether the wrist is above or below the corresponding shoulder.
 
 Both of tested models were fitted on datasets of different sizes and then their accuracy on never-seen validation data was evaluated. Before each training the whole dataset was shuffled and then divided into training and validation subsets. The portion of data used for training was the changing variable and it ranged from $0.9$ to $0.025$. The rest of the data where always used for validation. This approach decreases variance in the training dataset and concurrently increases it in the validation dataset. Because of this, model's ability to generalize well is displayed.
 
 To keep the experiment fair, dataset for each experiment was shuffled with the same seed for both models and, therefore, they had the same data for training and evaluating. For each dataset split portion, 10 runs of fitting and evaluating were done, each one with different seed. Seeds were chosen deterministically as integers from $0$ to $9$. Accuracy on validation data was then averaged over all 10 runs to get the final accuracy of the model for a given fraction of training data.
 
-The results of the evaluation are shown in the figure \ref{fig:self-supervised-vs-supervised}. For training dataset portions down to $15 \%$ (which equals $570$ of the $3804$ images used for training), the performances of self-supervised and supervised models are on a par. When the training dataset portion decreases to $12.5 \%$ ($475$ of $3804$ images) the supervised model starts to degrade and with just $2.5 \%$ images it approaches accuracy $25 \%$ which is for 4 classes basically a random guess. While the self-supervised model keeps its accuracy above $60 \%$ even when trained on $2.5 \%$ data which equals to $95$ images for training and $3709$ for validation.
+The results of the evaluation are shown in the figure \ref{fig:self-supervised-vs-supervised-simple}. For training dataset portions down to $15 \%$ (which equals $570$ of the $3804$ images used for training), the performances of self-supervised and supervised models are on a par. When the training dataset portion decreases to $12.5 \%$ ($475$ of $3804$ images) the supervised model starts to degrade and with just $2.5 \%$ images it approaches accuracy $25 \%$ which is for 4 classes basically a random guess. While the self-supervised model keeps its accuracy above $60 \%$ even when trained on $2.5 \%$ data which equals to $95$ images for training and $3709$ for validation.
 
 \begin{figure}[!ht]
     \centering
@@ -173,6 +279,40 @@ The results of the evaluation are shown in the figure \ref{fig:self-supervised-v
             \legend{Self-Supervised, Supervised}
         \end{axis}
     \end{tikzpicture}
-    \caption{Performance of self-supervised and supervised models on validation dataset based on what fraction of the whole dataset was used for training. The rest of the dataset was used for validation. Each datapoint is an average of 10 runs. Self-supervised model displays better accuracy for small training datasets. With the dataset size getting larger, both models perform similarly.}
-    \label{fig:self-supervised-vs-supervised}
+    \caption{Performance of self-supervised and supervised models on validation dataset based on what fraction of the whole dataset was used for training. The rest of the dataset was used for validation. Each data point is an average of 10 runs. Self-supervised model displays better accuracy for small training datasets. With the dataset size getting larger, both models perform similarly.}
+    \label{fig:self-supervised-vs-supervised-simple}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \begin{tikzpicture}
+    	\begin{axis}[
+    		title={Comparison of self-supervised and supervised models' accuracy},
+    		xlabel={Portion of dataset used for training},
+    		ylabel={Accuracy on validation dataset},
+    		xmin=0, xmax=1,
+    		ymin=0, ymax=1,
+    		xtick={0,0.1,0.2,0.4,0.6,0.8,1},
+    		ytick={0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1},
+    		xmajorgrids=true,
+    		ymajorgrids=true,
+    		grid style=dashed,
+    		legend pos=south east,
+    		legend style={nodes={scale=0.8}},
+    	]
+    		\addplot[color=red, mark=o]
+    			coordinates {(0.025,0.4029)(0.050,0.4260)(0.075,0.4049)(0.100,0.4819)(0.125,0.4855)(0.150,0.5456)(0.175,0.5651)(0.200,0.5888)(0.300,0.6678)(0.400,0.7238)(0.500,0.7365)(0.600,0.7602)(0.700,0.7710)(0.800,0.7799)(0.900,0.7947)};
+    		\addplot[color=red, mark=*]
+    			coordinates {(0.025,0.5398)(0.050,0.5800)(0.075,0.5846)(0.100,0.6458)(0.125,0.6678)(0.150,0.7313)(0.175,0.7618)(0.200,0.7701)(0.300,0.8490)(0.400,0.8929)(0.500,0.8986)(0.600,0.9189)(0.700,0.9307)(0.800,0.9353)(0.900,0.9416)};
+    		\addplot[color=blue, mark=square]
+    			coordinates {(0.025,0.1414)(0.050,0.2090)(0.075,0.2441)(0.100,0.2404)(0.125,0.2928)(0.150,0.3810)(0.175,0.4676)(0.200,0.4916)(0.300,0.5803)(0.400,0.6250)(0.500,0.6604)(0.600,0.6765)(0.700,0.7017)(0.800,0.7232)(0.900,0.7418)};
+    		\addplot[color=blue, mark=square*]
+    			coordinates {(0.100,0.3914)(0.125,0.5099)(0.150,0.6125)(0.175,0.7046)(0.200,0.7339)(0.300,0.8186)(0.400,0.8466)(0.500,0.8830)(0.600,0.8900)(0.700,0.9024)(0.800,0.9179)(0.900,0.9224)};
+                \addplot[color=blue, mark=square*, dashed]
+    			coordinates {(0.025,0.7949)(0.050,0.6085)(0.075,0.5359)(0.100,0.3914)};
+    		\legend{Self-Supervised (Top-1), Self-Supervised (Top-3), Supervised (Top-1), Supervised (Top-3)}
+    	\end{axis}
+    \end{tikzpicture}
+    \caption{Performance of self-supervised and supervised models on validation dataset based on what fraction of the whole dataset was used for training. The rest of the dataset was used for validation. Each data point is an average of 10 runs. Self-supervised model displays better accuracy for small training datasets. With the dataset size getting larger, both models perform similarly.}
+    \label{fig:self-supervised-vs-supervised-bent}
 \end{figure}

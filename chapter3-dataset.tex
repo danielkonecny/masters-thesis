@@ -13,7 +13,7 @@ As is mentioned in the section \ref{sec:self-supervised}, this thesis focuses on
 
 It is necessary to have the process of dataset creation as automated as possible. Otherwise it would have been easier to just label the data and simply use supervised learning approach. Therefore, I propose a set of tools in section \ref{sec:dataset-self-tool} that creates a dataset ready for TCL with just a small amount of user interaction. After that, a simple tool for labeling images is presented in section \ref{sec:dataset-label-tool}, because at least a small number of images with assigned class is always necessary.
 
-At the end of this chapter in section \ref{sec:basic-dataset}, a basic dataset of sports poses is presented. It contains scenes with solid background and sports poses with variance only in arm movement and it was captured and prepared especially for this thesis. The basic sports pose dataset was demonstratively prepared only with tools described below. Finally, possible directions of development of dataset with advanced sports poses are discussed.
+At the end of this chapter, in section \ref{sec:dataset-sports-poses}, a basic dataset of sports poses is presented. It contains scenes with solid background and sports poses with variance only in arm movement and it was captured and prepared especially for this thesis. The basic sports pose dataset was demonstratively prepared only with tools described below. Finally, possible directions of development of dataset with advanced sports poses are discussed.
 
 \section{\label{sec:dataset-self-tool}Creating Dataset for Time-Contrastive Learning}
 
@@ -63,16 +63,16 @@ Each overlap is assigned a specific index that will be used to describe it in th
     \begin{center}
         \begin{tabular}{ |c|c|c|c| }
             \hline
-            State & \makecell{Best overlap indices \\ (descending by correlation)} & Allowed range & \makecell{Standard \\ deviation (SD)} \\
+            State & \makecell{Best overlap indices \\ (descending by correlation)} & \makecell{Standard \\ deviation (SD)} & Allowed range \\
             \hline
             \hline
-                Initial & \makecell{\textcolor{red}{2882}, 1410, 1543, 1692, 1691,\\1693, 1690, 1694, 1388, 1695} & $(1339, 2137)$ & \textcolor{red}{$398.7 > 10$} \\
+                Initial & \makecell{\textcolor{red}{2882}, 1410, 1543, 1692, 1691,\\1693, 1690, 1694, 1388, 1695} & \textcolor{red}{$398.7 > 10$} & $(1339, 2137)$ \\
             \hline
-                1st epoch & \makecell{\textcolor{red}{1410}, 1543, 1692, 1691, 1693,\\1690, 1694, \textcolor{red}{1388}, 1695} & $(1488, 1733)$ & \textcolor{red}{$122.3 > 10$} \\
+                1st epoch & \makecell{\textcolor{red}{1410}, 1543, 1692, 1691, 1693,\\1690, 1694, \textcolor{red}{1388}, 1695} & \textcolor{red}{$122.3 > 10$} & $(1488, 1733)$ \\
             \hline
-                2nd epoch & \makecell{\textcolor{red}{1543}, 1692, 1691, 1693, 1690,\\1694, 1695} & $(1618, 1724)$ & \textcolor{red}{$52.3 > 10$} \\
+                2nd epoch & \makecell{\textcolor{red}{1543}, 1692, 1691, 1693, 1690,\\1694, 1695} & \textcolor{red}{$52.3 > 10$} & $(1618, 1724)$ \\
             \hline
-                3rd epoch & \makecell{\textcolor{green}{1692}, 1691, 1693, 1690, 1694,\\1695} & \makecell{Any -- SD \\ condition satisfied} & \textcolor{green}{$1.7 < 10$} \\
+                3rd epoch & \makecell{\textcolor{green}{1692}, 1691, 1693, 1690, 1694,\\1695} & \textcolor{green}{$1.7 \mathrel{\ooalign{$>$\cr\hidewidth$|$\hidewidth}} 10$} & \makecell{Any -- SD \\ condition satisfied} \\
             \hline
         \end{tabular}
     \end{center}
@@ -93,7 +93,9 @@ When the best overlap indices for the flow pairs are computed, flows are shorten
 
 After videos of a scene are synchronized, the last step in creating the dataset is choosing the correct frames to be used for training of a neural network model. These frames have to satisfy one property -- there has to be enough movement between them for a model to be able to recognize the difference. The less movement is between the frames, the harder it will be for the model to learn embeddings of the filmed object but also the more precise the embeddings might be. It is necessary to set the movement threshold to a correct value since the dataset quality is crucial for the model's performance.
 
-I decided to use Sparse Optical Flow to fulfill the movement detection task. While Dense Optical Flow tracks every pixel in the image, the sparse variant chooses only some pixels with Shi-Tomasi corner detector and those are being tracked \cite{shi-tomasi-323794}. The amount of movement has to be ideally aggregated into a single number and summed frame after frame until it exceeds a certain threshold. Then, enough motion has been detected and the given frame is selected and motion detection continues again from zero to detect another frame. This procedure dynamically chooses the gap between chosen frames, which is essential for sports pose recognition. It is possible that at some times no movement is performed for a few seconds and right after that is a section with quick motion.
+The first chosen approach was taking every $k$-th frame where $k$ was manually set by the amount of movement in the video. Since amount of movement varies in different timestamps of each video, this approach did not produce good enough frames for training. The next chosen tactics was using Dense Optical Flow for motion detection but this algorithm tracks every pixel in the video and the necessary information about movement of the followed object is lost in the amount of unnecessary data.
+
+Therefore, I decided to use Sparse Optical Flow to fulfill the movement detection task. Unlike the Dense Optical Flow, the sparse variant chooses only some pixels with Shi-Tomasi corner detector and those are being tracked \cite{shi-tomasi-323794}. The amount of movement has to be ideally aggregated into a single number and summed frame after frame until it exceeds a certain threshold. Then, enough motion has been detected and the given frame is selected and motion detection continues again from zero to detect another frame. This procedure dynamically chooses the gap between chosen frames, which is essential for sports pose recognition. It is possible that at some times no movement is performed for a few seconds and right after that is a section with quick motion.
 
 The challenging task is aggregating the information from sparse optical flow to a valuable metric. Since each scene can be different, the number of tracked pixels can also vary. Therefore, the distances cannot be easily summed but rather averaged. Another problem is introduced when the background of the scene is not solid and some of the tracked pixels are in the background. Those do not move and they should not influence the average distance of pixel movement. This is solved by calculating average of only those pixels, whose movement is above a certain threshold.
 
@@ -118,25 +120,79 @@ At first, file paths to the correct images are formed into triplets and then int
 
 \subsection{\label{sec:dataset-label-tool}Tool for Labeling Sports Poses in Dataset}
 
-Even though the main advantage of self-supervision is that very few annotated training samples are needed, there is still a need for some of them. That is why I decided to also develop a tool for very fast and easy labeling of training samples. This labeling tool takes a directory with unsorted images as an input and moves them to their respective directories named after their label.
+Even though the main advantage of self-supervision is that very few annotated training samples are needed, there is still a need for some of them. That is why I decided to also develop a tool for very fast and easy labeling of training samples. This labeling tool takes a directory with unsorted images as an input and moves them to their respective directories named after their labels.
 
-If launched for the first time, new classes have to be assigned to specific keys and then with just a single press of the key, displayed image is assigned to its class. This procedure makes image labeling as minimalistic as possible. Key-class pairs are saved as a dictionary to a file that can be loaded anytime to continue with annotating of images.
+If launched for the first time, new classes have to be assigned to specific keyboard keys and then with just a single press of the key, displayed image is assigned to its class. This procedure makes image labeling as minimalistic as possible. Key-class pairs are saved as a dictionary to a file that can be loaded at anytime to continue with annotating of images.
 
-\section{\label{sec:basic-dataset}Dataset of Basic Sports Poses}
+\section{\label{sec:dataset-sports-poses}Dataset of Sports Pose Images}
 
-For the development of the self-supervised model in this thesis, I recorded and prepared a dataset of simplified sports poses...
-\blindtext
+Multiple sets of videos were recorded for developing of tools for dataset suitable for time-contrastive learning and then for the sports pose recognition itself. At first, the goal was to obtain dataset consisting of simple scene that presents an easy challenge for both the dataset preparing tools and for recognition models. Afterwards, the dataset tools and models can be presented a more difficult task with dataset with sports poses. Sports poses from yoga are proposed for future development as one of the most challenging tasks possible in this field.
 
-\blindtext
+\subsection{Hand Poses as a Simple Testing Data}
 
-\blindtext
+One hand in different poses is a real world situation with pretty low variability, especially if the background is solid. Therefore, it is a good candidate for testing data for the dataset preparation tools and can be used for the testing of a self-supervised trained model during its development. The original videos are cropped so that only forearm and hand with fingers is in the frame to make them as elementary as possible. This dataset will be referred to as the Hand Dataset. Examples of its images are shown in the figure \ref{fig:dataset-hand-simple-example}.
 
-\blindtext
+\begin{figure*}[ht]
+    \centering
+    \includegraphics{figures/placeholder.pdf}
+    \caption{Multiple different samples from the dataset.}
+    \label{fig:dataset-hand-simple-example}
+\end{figure*}
 
-\subsection{Possible Development with Yoga Poses}
+Trimming and cropping of the video are done completely manually and basically are not dependent on the dataset, the first real challenge comes with the automatic synchronization of videos from multiple viewpoints. The task was easily fulfilled on videos with solid background and not so different viewpoints but once these two conditions were disrupted, an incorrect synchronization could be found. Therefore, an algorithm that searched for top 10 best synchronization timestamps, not only the best one, was developed. This algorithm is fully described in the previous section.
 
-Yoga poses are one the most complex among all sports poses...
-\blindtext
+Following challenge was to obtain specific frames from the video used for training. Videos without a solid background showed the importance of only taking into account the moving pixels because the Shi-Tomasi corner detector used in Sparse Optical Flow computation selects also pixels from the background, not only those related to the followed object. Another task that this dataset exposed was vanishing of the followed pixels. The last and most difficult challenge to solve was detection of translation where the pose actually does not change. Movement without any pose adjustment is a phenomenon normally present in this dataset. Another instance of the same problem is when the camera is moving and the pose stays in the same position.
+
+\subsection{Sports Poses with Upper Body Movement}
+
+The Hand Dataset served its purpose in making of the dataset preparation tools and the next task is the development of the self-supervised model. I recorded and prepared a dataset of simplified sports poses that are less complicated than what would for example yoga poses look like but still have the character of sports poses. Example of a couple of poses can be seen in the figure \ref{fig:dataset-upper-body-example}. All of the recorded poses hold these conditions. The person is recorded from knees up and moving only its arms, while any bending of shoulders, elbows, wrists and fingers is allowed (and advised).
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics{figures/placeholder.pdf}
+    \caption{Multiple different samples from the dataset.}
+    \label{fig:dataset-upper-body-example}
+\end{figure*}
+
+The dataset videos include one person in two scenes with different background. There are 5 recordings of each scene with the person wearing various clothing in each of them to increase variability in the dataset. That means 10 recordings in total. Performed poses are chosen randomly. Each scene was filmed with 3 cameras with different lenses. The camera angles were chosen so that one is facing straight from the front side and one is on each side in approximately 45 degrees angle from the front one. The total number of images in the dataset is 3804 but each of those is one of 1268 potentially different poses captured with 3 cameras. Distribution of the poses count across all ten recordings is following: 34, 49, 67, 99, 96, 51, 204, 128, 295, 245.
+
+\subsection{Sorting Upper Body Dataset into Classes}
+
+The recorded dataset of arm movement is prepared for self-supervised training of an encoder model but for real recognition, some amount of labeled samples is also necessary. There are many different ways to sort all the poses into classes. I decided to assign two sets of labels to all the samples to have enough data for experiments, one with a lower number of classes that presents an easier recognition task and the other with higher number of classes to demonstrate the models performance.
+
+At first, I divided the data into 4 classes to create an easier task. Since arms are the only moving entities in the image, only those are taken into account and the rest of the body is ignored. Each arm can be either in upward or downward direction but when various elbow bendings are taken into account, resolving whether arm is pointing up or down is ambiguous. Therefore, a strict criteria has to be set. I decided to use the height of wrist and shoulder to be the determining factor. If a wrist is above shoulder height, the arm is in upward position. Finally, each arm is dealt with separately and that means 4 classes emerge: both arms down (down-down -- 1,146 samples), left arm down and right arm up (down-up -- 813 samples), left arm up and right arm down (up-down -- 795 samples) and both arms up (up-up -- 1,050 samples). Dataset with basic sports poses divided into these 4 classes will be from now on referred to as Directions Dataset.
+
+For more complex and convincing evaluation of developed models, I prepared one more set of labels with finer separation. The main thought is the same as for the Directions Dataset -- each arm is either pointing up or down, but one more feature was added. Each arm can be either bent in the elbow or not -- if the elbow angle is smaller than 135 degrees, arm is considered bent. All of the Directions Dataset classes have 2 possible options which creates 16 classes in total. Higher number of classes not only allows for more valuable testing of the model but also brings option of evaluating not only top-1 accuracy but also top-3 accuracy. When the correct class of a certain pose is not the one with the highest probability according to the classifier but still is the second or third, the model shown some ability to recognize poses too. Counts of samples for each class of the Bent Dataset are presented in the table \ref{tab:bent-dataset-counts}. Class names are derived from the Directions Dataset, only change is that when an arm in the given direction is bent, letter 'b' is placed in front of the direction.
+
+\begin{table}[!ht]
+    \footnotesize
+    \begin{center}
+        \begin{tabular}{ |c|c||c|c||c|c||c|c| }
+            \hline
+                Class & \makecell{Sample \\ count} & Class & \makecell{Sample \\ count} & Class & \makecell{Sample \\ count} & Class & \makecell{Sample \\ count} \\
+            \hline
+            \hline
+            down-down & $1,005$ & bdown-down & $63$ & down-bdown & $48$ & bdown-bdown & $63$ \\
+            \hline
+            down-up & $399$ & bdown-up & $21$ & down-bup & $285$ & bdown-bup & $102$ \\
+            \hline
+            up-down & $399$ & bup-down & $282$ & up-bdown & $33$ & bup-bdown & $90$ \\
+            \hline
+            up-up & $495$ & bup-up & $135$ & up-bup & $99$ & bup-bup & $285$ \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \caption{Distribution of sports pose images between all classes of the Bent Dataset. First word shows direction that the left arm is heading, second word represents the right arm. If the arm is bent, letter 'b' precedes the direction.}
+    \label{tab:bent-dataset-counts}
+\end{table}
+
+Both of the presented datasets cannot be perfectly divided into classes without any discrepancy. Followed features are in some cases right in between the available classes. Arm can be almost perfectly horizontal with its wrist in the same height as shoulder. Correspondingly, elbow angle can be precisely 45 degrees or very close to it and it is not possible to distinguish this difference from a single image. Therefore, some error rate is almost inevitable and has to be taken into account during the model evaluation.
+
+Directions Dataset has fairly equally distributed images between classes whereas Bent Dataset has significant disproportions in the counts. This presents another challenge for classifier that is trying to learn on the data. In general, self-supervised models should have better performance on such data because they first learn the data embeddings without any labels and then solve fairly simple task in classifying those. In contrast to supervised classifier that is solving the difficult task directly on the labeled data and might not update its weights enough because other classes in the batch are more significant.
+
+\subsection{Yoga Sports Poses for Future Development}
+
+Yoga sports poses are one the most complex among all sports poses, there are hundreds of possible poses and their variants. They can be also sorted into different sets according to their similarities. All these attributes make them the perfect candidate for a very difficult sports pose recognition task and, therefore, I propose yoga poses to be used for the future development in this field.
 
 Yoga-82 dataset contains over 28 400 annotated samples of 82 different yoga poses.
 \blindtext
