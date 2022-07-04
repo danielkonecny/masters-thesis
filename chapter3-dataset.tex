@@ -192,13 +192,12 @@ Directions Dataset has fairly equally distributed images between classes whereas
 
 \subsection{Yoga Sports Poses for Future Development}
 
-Yoga sports poses are one the most complex among all sports poses, there are hundreds of possible poses and their variants. They can be also sorted into different sets according to their similarities. All these attributes make them the perfect candidate for a very difficult sports pose recognition task and, therefore, I propose yoga poses to be used for the future development in this field.
+Yoga sports poses are one the most complex among all sports poses, there are hundreds of possible poses and their variants. They can be also sorted into different sets according to their similarities. All these attributes make them the perfect candidate for a very difficult sports pose recognition task and, therefore, I propose yoga poses as a benchmark for the future development in this field.
 
-Yoga-82 dataset contains over 28 400 annotated samples of 82 different yoga poses.
-\blindtext
+Verma et al. in \cite{verma2020yoga} present a new dataset Yoga-82 for human pose classification that is base on yoga poses. It contains over 28 400 annotated samples of 82 different yoga poses. The classes are sorted into 3-level hierarchy where each of the 82 poses are assigned a second and first-level class as well. This structure can be further used for recognition of poses that are projected into an embedding space since embeddings of poses from the same higher-level class can have similarities in the space.
 
-\blindtext
+The dataset is available to download in form of URL links to each image sorted into files according to their classes. The images are under different creative common licenses. There is no script for downloading of the images as a part of the publication. Since the images are from various sources from the internet, their availability is out of reach of the dataset authors. In the time of publishing this thesis, there are already hundreds of images not available.
 
-\blindtext
+The images differ in resolution and aspect ratio, therefore, some sort of preprocessing is necessary. Their variability is very high, they are captured both indoors and outdoors and with very different backgrounds. The displayed people differ in their gender, skin color, clothing and other visible characters. Some images even contain multiple people, text added over the pose in postproduction or the images are just a simple illustration of the pose, not a real photo. These additional features might not serve well for better generalization of the trained model, rather for confusion because of the unrealism.
 
-\blindtext
+These images could be used for classification of the poses from embeddings but the more complicated task is learning the sports pose embeddings with a time-contrastive network. This process requires synchronized videos or at least images of the same scene from different viewpoints. I have not found such dataset online and therefore, I suspect it has to be recorded specifically for this task. One possible solution for making the dataset creation more feasible would be to partner with some yoga video producer. There is a chance they are filming their videos from multiple angles and could offer their raw recordings for such project. The variability of all recordings has to be taken into account. If they are from the same environment (e.g. indoor gym), the model will probably not generalize well to other surroundings (for example outdoors).
