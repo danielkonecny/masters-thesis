@@ -22,7 +22,7 @@ As is mentioned in the section \ref{sec:self-supervised}, this thesis focuses on
         \draw [arrow] (cam3) -- (scene);
     \end{tikzpicture}
     
-    \caption{Example of a scene filmed from different viewpoints with 3 cameras. With higher number of viewpoints is achieved greater variability in the dataset for time-contrastive learning.}
+    \caption{Example of a scene filmed from different viewpoints with 3 cameras. Higher number of viewpoints ensures greater variability in the dataset for time-contrastive learning.}
     \label{fig:scene-multiple-cameras}
 \end{figure*}
 
@@ -170,19 +170,19 @@ Each overlap is assigned a specific index that will be used to describe it in th
             \hline
         \end{tabular}
     \end{center}
-    \caption{Example of real data from algorithm that tries to find the correct overlap index of two flows to have them correlate as much as possible. The algorithm needed 3 epochs to remove indices that had no other surrounding ones and, therefore, were detected as false findings. These indices are out of the allowed range, while the other were close to each other and in the allowed range. Index 1692 had the best correlation and was chosen as the best overlap index.}
+    \caption{Example of real data from algorithm that tries to find the correct overlap index of two flows to have them correlated as much as possible. The algorithm needed 3 epochs to remove indices that had no other surrounding ones and, therefore, were detected as false findings. These indices are out of the allowed range, while the other were close to each other and in the allowed range. Index 1692 had the best correlation and was chosen as the best overlap index.}
     \label{tab:correlation-pick}
 \end{table}
 
 When the best overlap indices for the flow pairs are computed, flows are shortened to the same length where all of them overlapped. Their respective videos are trimmed at the beginning and at the end to have the same length as well and are thus synchronized because of the correct trim times.
 
-\subsection{Detecting Movement with Sparse Optical Flow}
+\subsection{\label{sec:motion-detect}Detecting Movement with Sparse Optical Flow}
 
 After videos of a scene are synchronized, the last step in creating the dataset is choosing the correct frames to be used for training of a neural network model. These frames have to satisfy one property -- there has to be enough movement between them for a model to be able to recognize the difference. The less movement is between the frames, the harder it will be for the model to learn embeddings of the filmed object but also the more precise the embeddings might be. It is necessary to set the movement threshold to a correct value since the dataset quality is crucial for the model's performance.
 
 The first chosen approach was taking every $k$-th frame where $k$ was manually set by the amount of movement in the video. Since amount of movement varies in different timestamps of each video, this approach did not produce good enough frames for training. The next chosen tactics was using Dense Optical Flow for motion detection but this algorithm tracks every pixel in the video and the necessary information about movement of the followed object is lost in the amount of unnecessary data.
 
-Therefore, I decided to use Sparse Optical Flow to fulfill the movement detection task. Unlike the Dense Optical Flow, the sparse variant chooses only some pixels with Shi-Tomasi corner detector and those are being tracked \cite{shi-tomasi-323794}. The amount of movement has to be ideally aggregated into a single number and summed frame after frame until it exceeds a certain threshold. Then, enough motion has been detected and the given frame is selected and motion detection continues again from zero to detect another frame. This procedure dynamically chooses the gap between chosen frames, which is essential for sports pose recognition. It is possible that at some times no movement is performed for a few seconds and right after that is a section with quick motion.
+Therefore, I decided to use Sparse Optical Flow to fulfill the movement detection task. Unlike the Dense Optical Flow, the sparse variant chooses only some pixels with Shi-Tomasi corner detector and those are being tracked \cite{shi-tomasi-323794}. The amount of movement has to be ideally aggregated into a single number and summed frame after frame until it exceeds a certain threshold. Then, enough motion has been detected and the given frame is selected and motion detection continues again from zero to detect another frame. This procedure dynamically chooses the gap between chosen frames, which is essential for sports pose recognition. It is possible that at some times few seconds of no movement are followed with a lot of motion in just one second.
 
 The challenging task is aggregating the information from sparse optical flow to a valuable metric. Since each scene can be different, the number of tracked pixels can also vary. Therefore, the distances cannot be easily summed but rather averaged. Another problem is introduced when the background of the scene is not solid and some of the tracked pixels are in the background. Those do not move and they should not influence the average distance of pixel movement. This is solved by calculating average of only those pixels, whose movement is above a certain threshold.
 
@@ -208,7 +208,7 @@ If launched for the first time, new classes have to be assigned to specific keyb
 
 Multiple sets of videos were recorded for developing of tools for dataset suitable for time-contrastive learning and then for the sports pose recognition itself. At first, the goal was to obtain dataset consisting of simple scene that presents an easy challenge for both the dataset preparing tools and for recognition models. Afterwards, the dataset tools and models can be presented a more difficult task with dataset with sports poses. Sports poses from yoga are proposed for future development as one of the most challenging tasks possible in this field.
 
-\subsection{Hand Poses as a Simple Testing Data}
+\subsection{\label{sec:dataset-hand}Hand Poses as a Simple Testing Data}
 
 One hand in different poses is a real world situation with pretty low variability, especially if the background is solid. Therefore, it is a good candidate for testing data for the dataset preparation tools and can be used for the testing of a self-supervised trained model during its development. The original videos are cropped so that only forearm and hand with fingers is in the frame to make them as elementary as possible. This dataset will be referred to as the Hand Dataset. Examples of its images are shown in the figure \ref{fig:dataset-hand-simple-example}.
 
@@ -234,7 +234,7 @@ Trimming and cropping of the video are done completely manually and basically ar
 
 Following challenge was to obtain specific frames from the video used for training. Videos without a solid background showed the importance of only taking into account the moving pixels because the Shi-Tomasi corner detector used in Sparse Optical Flow computation selects also pixels from the background, not only those related to the followed object. Another task that this dataset exposed was vanishing of the followed pixels. The last and most difficult challenge to solve was detection of translation where the pose actually does not change. Movement without any pose adjustment is a phenomenon normally present in this dataset. Another instance of the same problem is when the camera is moving and the pose stays in the same position.
 
-\subsection{Sports Poses with Upper Body Movement}
+\subsection{\label{sec:dataset-upper-body}Sports Poses with Upper Body Movement}
 
 The Hand Dataset served its purpose in making of the dataset preparation tools and the next task is the development of the self-supervised model. I recorded and prepared a dataset of simplified sports poses that are less complicated than what would for example yoga poses look like but still have the character of sports poses. Example of poses can be seen in the figure \ref{fig:dataset-upper-body-example}. All of the recorded poses hold these conditions. The person is recorded from knees up and moving only its arms, while any bending of shoulders, elbows, wrists and fingers is allowed (and advised).
 
@@ -271,7 +271,7 @@ The Hand Dataset served its purpose in making of the dataset preparation tools a
 
 The dataset videos include one person in two scenes with different background. There are 5 recordings of each scene with the person wearing various clothing in each of them to increase variability in the dataset. That means 10 recordings in total. Performed poses are chosen randomly. Each scene was filmed with 3 cameras with different lenses. The camera angles were chosen so that one is facing straight from the front side and one is on each side in approximately 45 degrees angle from the front one. The total number of images in the dataset is 3804 but each of those is one of 1268 potentially different poses captured with 3 cameras. Distribution of the poses count across all ten recordings is following: 34, 49, 67, 99, 96, 51, 204, 128, 295, 245.
 
-\subsection{Sorting Upper Body Dataset into Classes}
+\subsection{\label{sec:dataset-labels}Sorting Upper Body Dataset into Classes}
 
 The recorded dataset of arm movement is prepared for self-supervised training of an encoder model but for real recognition, some amount of labeled samples is also necessary. There are many different ways to sort all the poses into classes. I decided to assign two sets of labels to all the samples to have enough data for experiments, one with a lower number of classes that presents an easier recognition task and the other with higher number of classes to demonstrate the models performance.
 
