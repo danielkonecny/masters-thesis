@@ -2,7 +2,7 @@
 
 Datasets for self-supervised learning in general can be very different from each other, their form depends on the task that is being solved and the way of achieving the self-supervision. Although, all of them have one thing in common -- they mainly consist of unannotated data and at the end, they need smaller amount of annotated data to be able to classify from learned embeddings.
 
-As is mentioned in the section \ref{sec:self-supervised}, this thesis focuses on Time-Contrastive Learning (TCL), which means that it achieves supervision with multiple viewpoints of the same scene concurrently as is displayed in the figure \ref{fig:scene-multiple-cameras}. While the filmed object may look very different when filmed from different angles, it is still the same object if the timestamps are identical. It is also possible to use moving cameras for filming of the scene, although this might introduce some inaccuracy to movement detection. On the other hand, even when the viewpoint is equivalent, the object can be altered only after a short time has passed. This characteristic holds supervision when TCL is used and because no extra work (e.g. labeling) has to be done, the data is supervised by itself -- self-supervised. The only restriction is the need to have multiple videos of the same scene synchronized in time.
+As is mentioned in Section~\ref{sec:self-supervised}, this thesis focuses on Time-Contrastive Learning (TCL), which means that it achieves supervision with multiple viewpoints of the same scene concurrently as is displayed in Figure~\ref{fig:scene-multiple-cameras}. While the filmed object may look very different when filmed from different angles, it is still the same object if the timestamps are identical. It is also possible to use moving cameras for filming of the scene, although this might introduce some inaccuracy to movement detection. On the other hand, even when the viewpoint is equivalent, the object can be altered only after a short time has passed. This characteristic holds supervision when TCL is used and because no extra work (e.g. labeling) has to be done, the data is supervised by itself -- self-supervised. The only restriction is the need to have multiple videos of the same scene synchronized in time.
 
 \begin{figure*}[ht!]
     \centering
@@ -26,13 +26,13 @@ As is mentioned in the section \ref{sec:self-supervised}, this thesis focuses on
     \label{fig:scene-multiple-cameras}
 \end{figure*}
 
-It is necessary to have the process of dataset creation as automated as possible. Otherwise it would have been easier to just label the data and simply use supervised learning approach. Therefore, I propose a set of tools in section \ref{sec:dataset-self-tool} that creates a dataset ready for TCL with just a small amount of user interaction. After that, a simple tool for labeling images is presented in section \ref{sec:dataset-label-tool}, because at least a small number of images with assigned class is always necessary.
+It is necessary to have the process of dataset creation as automated as possible. Other\-wise it would have been easier to just label the data and simply use supervised learning approach. Therefore, I propose a set of tools in Section~\ref{sec:dataset-self-tool} that creates a dataset ready for TCL with just a small amount of user interaction. After that, a simple tool for labeling images is presented in Section~\ref{sec:dataset-label-tool}, because at least a small number of images with assigned class is always necessary.
 
-At the end of this chapter, in section \ref{sec:dataset-sports-poses}, a basic dataset of sports poses is presented. It contains scenes with solid background and sports poses with variance only in arm movement and it was captured and prepared especially for this thesis. The basic sports pose dataset was demonstratively prepared only with tools described below. Finally, possible directions of development of dataset with advanced sports poses are discussed.
+At the end of this chapter, in Section~\ref{sec:dataset-sports-poses}, a basic dataset of sports poses is presented. It contains scenes with solid background and sports poses with variance only in arm movement and it was captured and prepared especially for this thesis. The basic sports pose dataset was demonstratively prepared only with tools described below. Finally, possible directions of development of dataset with advanced sports poses are discussed.
 
 \section{\label{sec:dataset-self-tool}Creating Dataset for Time-Contrastive Learning}
 
-Dataset for Time-Contrastive Learning (TCL) is created from synchronized videos of the same scene filmed from different angles. I propose a tool for semi-automatic preparation of such dataset, illustrated in the figure \ref{fig:dataset-preparation}. It offers few simple editing features as cropping and trimming. Very important feature it provides is automatic synchronization of multiple videos. The second necessary component is a movement detector that estimates how much movement happened between frames of the video. This information is essential to achieve the time contrast that TCL relies on. Finally, the tool exports chosen video frames with their timestamps to simplify creating of triplets for model training.
+Dataset for Time-Contrastive Learning (TCL) is created from synchronized videos of the same scene filmed from different angles. I propose a tool for semi-automatic preparation of such dataset, illustrated in Figure~\ref{fig:dataset-preparation}. It offers few simple editing features as cropping and trimming. Very important feature it provides is automatic synchronization of multiple videos. The second necessary component is a movement detector that estimates how much movement happened between frames of the video. This information is essential to achieve the time contrast that TCL relies on. Finally, the tool exports chosen video frames with their timestamps to simplify creating of triplets for model training.
 
 \begin{figure*}[ht!]
     \centering
@@ -99,9 +99,9 @@ Cross-platform video conversion solution \texttt{FFmpeg} is used to handle all v
 
 \subsection{Preparing Videos Filmed with Various Cameras}
 
-The first step in dataset preparation is to trim the start and the end of the video. It is almost certain that the video contains a little bit of inapplicable footage at the beginning and at the end. Therefore, a simple tool that allows user to select the trim range with sliders is developed for the purpose of this thesis. Because of how the synchronization tool works, user only needs to trim one of the videos, the others will be trimmed automatically when being synchronized. This is further described in section \ref{sec:dataset-sync}.
+The first step in dataset preparation is to trim the start and the end of the video. It is almost certain that the video contains a little bit of inapplicable footage at the beginning and at the end. Therefore, a simple tool that allows user to select the trim range with sliders is developed for the purpose of this thesis. Because of how the synchronization tool works, user only needs to trim one of the videos, the others will be trimmed automatically when being synchronized. This is further described in Section~\ref{sec:dataset-sync}.
 
-In most cases, the video's resolution does not match the input of the model and has to be scaled down and is often also cropped to correct ratio. The tool allows user to select a bounding box around the scene which will always be included in the cropped video and non-important parts of the scene will mostly be deleted. Correct crop coordinates are automatically computed to match the input of the network and all other constraints. The computation consists of these operations and their order is important.
+In most cases, the video's resolution does not match the input of the model and has to be scaled down and is often also cropped to correct ratio. The tool allows user to select a bounding box around the scene which will always be included in the cropped video and non-important parts of the scene will mostly be deleted. Correct crop coordinates are automatically computed to match the input of the network and all other constraints. The computation consists of operations shown in Figure~\ref{fig:dataset-crop-process} and described into detail in the following enumerated list, their order is important.
 
 \begin{enumerate}
     \item A view of the video as a single image is constructed from 10 merged frames taken out of the whole video in order to provide user with enough information about the range of motion.
@@ -110,34 +110,54 @@ In most cases, the video's resolution does not match the input of the model and 
     \item If crop selection has lower resolution than the network input, the selection is equally extended.
     \item If crop selection exceeds the frame size, it is decreased to the closest possible value.
     \item If crop selection is positioned out of the frame, it is moved to the closest correct position.
+    \item Video is cropped to the computed crop selection.
 \end{enumerate}
+
+\begin{figure*}[ht]\centering
+    \centering
+    \includegraphics[scale=0.5]{figures/dataset_crop/fig1.ai}
+    \caption{Process of cropping a video with semi-automatic tool. User selects an area of interest with a bounding box and the tool performs cropping and resizing to a given resolution. The numbering of individual steps refers to previously mentioned description of the tool. Blue arrows symbolize automatic steps and red arrow a manual step. Steps 5 and 6 are only needed for some specific cases displayed in the figure, step 4 is not shown.}
+    \label{fig:dataset-crop-process}
+\end{figure*}
 
 Crop coordinates are correctly computed to match the model input $height \times width$ ratio but the resolution will most likely not match. Therefore, the video has to be scaled down or (in case of video having lower resolution than model input) scaled up. Lastly, framerate of all of the videos has to be unified to a previously chosen fixed value to ensure correct run of synchronization and motion detection algorithms.
 
-\subsection{\label{sec:dataset-sync}Synchronizing Videos with Dense Optical Flow}
+\subsection{\label{sec:dataset-sync}Synchronizing Videos by using Dense Optical Flow}
 
 The main requirement for TCL to work is synchronization of all used videos. It is very likely that not all used videos are perfectly synchronized and manual synchronization would not be very precise nor effortless. Therefore, I present an automatic tool that determines the correct synchronization and trims all videos at the beginning and at the end so that all are the same length and are synchronized.
 
-The synchronization is done with dense optical flow, which is information about the movement of each pixel between video frames \cite{HORN1981185}. Visualization of dense optical flow is shown in the figure \ref{fig:optical-flow}. The assumption behind using dense optical flow for synchronization is that videos of the same scene have correlative amount of movement in similar directions at the same time. The precise movement of each pixel cannot be easily computed, it is only possible to approximate it. However, the precise values are not necessary for synchronization purposes, rough values are accurate enough.
+The synchronization is done by dense optical flow, which is information about the movement of each pixel between video frames \cite{HORN1981185}. Visualization of dense optical flow is shown in Figure~\ref{fig:optical-flow}. The assumption behind using dense optical flow for synchronization is that videos of the same scene have correlative amount of movement in similar directions at the same time. The precise movement of each pixel cannot be easily computed, it is only possible to approximate it. However, the precise values are not necessary for synchronization purposes, rough values are accurate enough.
 
 \begin{figure*}[!ht]
     \begin{subfigure}[b]{0.24\textwidth}
-        \includegraphics[width=\linewidth]{figures/optical_flow/image000000312.png}
+        \includegraphics[width=\linewidth]{figures/optical_flow/frame000000312.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/frame000000386.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/frame000001127.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/frame000001664.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.244\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/flow000000312.png}
         \caption{}
         \label{fig:optical-flow-a}
     \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \includegraphics[width=\linewidth]{figures/optical_flow/image000000386.png}
+    \begin{subfigure}[b]{0.244\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/flow000000386.png}
         \caption{}
         \label{fig:optical-flow-b}
     \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \includegraphics[width=\linewidth]{figures/optical_flow/image000001127.png}
+    \begin{subfigure}[b]{0.244\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/flow000001127.png}
         \caption{}
         \label{fig:optical-flow-c}
     \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \includegraphics[width=\linewidth]{figures/optical_flow/image000001664.png}
+    \begin{subfigure}[b]{0.244\textwidth}
+        \includegraphics[width=\linewidth]{figures/optical_flow/flow000001664.png}
         \caption{}
         \label{fig:optical-flow-d}
     \end{subfigure}
@@ -147,11 +167,11 @@ The synchronization is done with dense optical flow, which is information about 
 
 Movement vector of each pixel is from two reasons too specific for this task. First reason is that each video displays the scene from different angle and their optical flows will most likely be different. It is more useful to have general information about movement in the whole frame than to have it pixel-wise to eliminate small discrepancies. The second reason to aggregate information over the whole frame is growing computational complexity. If the information is accumulated over all pixels into a fixed number of values, the computational complexity stays constant, whereas it grows when pixel motion values are used individually. 
 
-Since all pixels can move in two dimensions, it would make sense to gather information about horizontal and vertical movement by simply summing up all the values. Problem with this approach is that when some pixels move to the right and some to the left, their movement vectors subtract from each other in that dimension and a lot of information is lost. For that reason, I propose to sum separately positive and negative values in each dimension and obtain information about amount of motion in 4 directions -- up, down, left and right. Each frame (except the first one) of each video is assigned these 4 values describing the optical flow from the previous frame to the current one.
+Since all pixels can move in two dimensions, it would make sense to gather information about horizontal and vertical movement by simply summing up all the values. Problem with this approach is that when some pixels move to the right and some to the left, their movement vectors subtract from each other in that dimension and a lot of information is lost. For that reason, I propose to sum separately positive and negative values in each dimension and obtain information about amount of motion in 4 directions -- up, down, left, and right. Each frame (except the first one) of each video is assigned these 4 values describing the optical flow from the previous frame to the current one.
 
-After that, Pearson correlation of the aggregated optical flows of video pairs has to be done. These are not computed for all pair combinations, all flows are only compared to the shortest one to perform a smaller number of computations but still guarantee to get the best possible synchronization. Each flow pair is compared to get overlap with the highest correlation, that means correlation for each possible overlap is computed. Only restriction is that the overlap has to be at least a certain number of frames long to eliminate corner cases where for example only one frame has the best correlation (the first frame from one video and the last one from another). This minimal overlap length can be a little lower than what the expected length of synchronized videos is to optimize for the lowest number of correlations that has to be done. By default, it is set to 1000 frames.
+After that, Pearson correlation of the aggregated optical flows of video pairs has to be done. These are not computed for all pair combinations, all flows are only compared to the shortest one to perform a smaller number of computations but still guarantee to get the best possible synchronization. Each flow pair is compared to get overlap with the highest correlation, that means correlation for each possible overlap is computed. Only restriction is that the overlap has to be at least a certain number of frames long to eliminate corner cases where for example only one frame has the best correlation (the first frame from one video and the last one from another). This minimal overlap length can be a little lower than what the expected length of synchronized videos is to optimize for the lowest number of correlations that has to be done. By default, it is set to $1{,}000$ frames.
 
-Each overlap is assigned a specific index that will be used to describe it in the following text. The problem is that overlap index with the highest correlation might not be the correct one that synchronizes the videos because of some inaccuracy. To eliminate this problem, one additional property can be used -- if the correlations are computed accurately, the highest ones will be of overlap indices from similar range, just a few frames apart. To use this property, overlap indices are sorted descending by correlation and top 10 are taken. Standard deviation of these samples is computed and if it exceeds 10, it means that there is at least one overlap index among them that does not fit the majority. All these indices are checked and if they are further than one standard deviation from the mean, they are removed from this list. This operation is repeated until the standard deviation of the whole list is lower than 10. After that, the index with the highest correlation that is still in the list is the best one for synchronization. Real data example of this algorithm is provided in table \ref{tab:correlation-pick}.
+Each overlap is assigned a specific index that will be used to describe it in the following text. The problem is that overlap index with the highest correlation might not be the correct one that synchronizes the videos because of some inaccuracy. To eliminate this problem, one additional property can be used -- if the correlations are computed accurately, the highest ones will be of overlap indices from similar range, just a few frames apart. To use this property, overlap indices are sorted descending by correlation and top 10 are taken. Standard deviation of these samples is computed and if it exceeds 10, it means that there is at least one overlap index among them that does not fit the majority. All these indices are checked and if they are further than one standard deviation from the mean, they are removed from this list. This operation is repeated until the standard deviation of the whole list is lower than 10. After that, the index with the highest correlation that is still in the list is the best one for synchronization. Real data example of this algorithm is provided in Table~\ref{tab:correlation-pick}.
 
 \begin{table}[!ht]
     \begin{center}
@@ -206,11 +226,11 @@ If launched for the first time, new classes have to be assigned to specific keyb
 
 \section{\label{sec:dataset-sports-poses}Dataset of Sports Pose Images}
 
-Multiple sets of videos were recorded for developing of tools for dataset suitable for time-contrastive learning and then for the sports pose recognition itself. At first, the goal was to obtain dataset consisting of simple scene that presents an easy challenge for both the dataset preparing tools and for recognition models. Afterwards, the dataset tools and models can be presented a more difficult task with dataset with sports poses. Sports poses from yoga are proposed for future development as one of the most challenging tasks possible in this field.
+Multiple sets of videos were recorded for developing of tools for dataset suitable for time-contrastive learning and then for the sports pose recognition itself. At first, the goal was to obtain dataset consisting of simple scene that presents an easy challenge for both the dataset preparing tools and for recognition models. Afterwards, a more difficult task can be presented to the dataset tools and encoding and classifying models, e.g. a dataset with sports poses recorded in multiple environments. Sports poses from yoga are proposed for future development as one of the most challenging tasks possible in this field.
 
 \subsection{\label{sec:dataset-hand}Hand Poses as a Simple Testing Data}
 
-One hand in different poses is a real world situation with pretty low variability, especially if the background is solid. Therefore, it is a good candidate for testing data for the dataset preparation tools and can be used for the testing of a self-supervised trained model during its development. The original videos are cropped so that only forearm and hand with fingers is in the frame to make them as elementary as possible. This dataset will be referred to as the Hand Dataset. Examples of its images are shown in the figure \ref{fig:dataset-hand-simple-example}.
+One hand in different poses is a real world situation with pretty low variability, especially if the background is solid. Therefore, it is a good candidate for testing data for the dataset preparation tools and can be used for the testing of a self-supervised trained model during its development. The original videos are cropped so that only forearm and hand with fingers is in the frame to make them as elementary as possible. This dataset will be referred to as the Hand Dataset. Examples of its images are shown in Figure~\ref{fig:dataset-hand-simple-example}.
 
 \begin{figure*}[!ht]
     \centerline{
@@ -236,7 +256,7 @@ Following challenge was to obtain specific frames from the video used for traini
 
 \subsection{\label{sec:dataset-upper-body}Sports Poses with Upper Body Movement}
 
-The Hand Dataset served its purpose in making of the dataset preparation tools and the next task is the development of the self-supervised model. I recorded and prepared a dataset of simplified sports poses that are less complicated than what would for example yoga poses look like but still have the character of sports poses. Example of poses can be seen in the figure \ref{fig:dataset-upper-body-example}. All of the recorded poses hold these conditions. The person is recorded from knees up and moving only its arms, while any bending of shoulders, elbows, wrists and fingers is allowed (and advised).
+The Hand Dataset served its purpose in making of the dataset preparation tools and the next task is the development of the self-supervised model. I recorded and prepared a dataset of simplified sports poses that are less complicated than what would for example yoga poses look like but still have the character of sports poses. Example of poses can be seen in Figure~\ref{fig:dataset-upper-body-example}. All of the recorded poses hold these conditions. The person is recorded from knees up and moving only its arms, while any bending of shoulders, elbows, wrists, and fingers is allowed (and advised).
 
 \begin{figure*}[!ht]
     \centerline{
@@ -269,15 +289,15 @@ The Hand Dataset served its purpose in making of the dataset preparation tools a
     \label{fig:dataset-upper-body-example}
 \end{figure*}
 
-The dataset videos include one person in two scenes with different background. There are 5 recordings of each scene with the person wearing various clothing in each of them to increase variability in the dataset. That means 10 recordings in total. Performed poses are chosen randomly. Each scene was filmed with 3 cameras with different lenses. The camera angles were chosen so that one is facing straight from the front side and one is on each side in approximately 45 degrees angle from the front one. The total number of images in the dataset is 3804 but each of those is one of 1268 potentially different poses captured with 3 cameras. Distribution of the poses count across all ten recordings is following: 34, 49, 67, 99, 96, 51, 204, 128, 295, 245.
+The dataset videos include one person in two scenes with different background. There are 5 recordings of each scene with the person wearing various clothing in each of them to increase variability in the dataset. That means 10 recordings in total. Performed poses are chosen randomly. Each scene was filmed with 3 cameras with different lenses. The camera angles were chosen so that one is facing straight from the front side and one is on each side in approximately 45 degrees angle from the front one. The total number of images in the dataset is $3{,}804$ but each of those is one of $1{,}268$ potentially different poses captured with 3 cameras. Distribution of the poses count across all ten recordings is following: 34, 49, 67, 99, 96, 51, 204, 128, 295, 245.
 
 \subsection{\label{sec:dataset-labels}Sorting Upper Body Dataset into Classes}
 
 The recorded dataset of arm movement is prepared for self-supervised training of an encoder model but for real recognition, some amount of labeled samples is also necessary. There are many different ways to sort all the poses into classes. I decided to assign two sets of labels to all the samples to have enough data for experiments, one with a lower number of classes that presents an easier recognition task and the other with higher number of classes to demonstrate the models performance.
 
-At first, I divided the data into 4 classes to create an easier task. Since arms are the only moving entities in the image, only those are taken into account and the rest of the body is ignored. Each arm can be either in upward or downward direction but when various elbow bendings are taken into account, resolving whether arm is pointing up or down is ambiguous. Therefore, a strict criteria has to be set. I decided to use the height of wrist and shoulder to be the determining factor. If a wrist is above shoulder height, the arm is in upward position. Finally, each arm is dealt with separately and that means 4 classes emerge: both arms down (down-down -- 1,146 samples), left arm down and right arm up (down-up -- 813 samples), left arm up and right arm down (up-down -- 795 samples) and both arms up (up-up -- 1,050 samples). Dataset with basic sports poses divided into these 4 classes will be from now on referred to as Directions Dataset.
+At first, I divided the data into 4 classes to create an easier task. Since arms are the only moving entities in the image, only those are taken into account and the rest of the body is ignored. Each arm can be either in upward or downward direction but when various elbow bendings are taken into account, resolving whether arm is pointing up or down is ambiguous. Therefore, a strict criteria has to be set. I decided to use the height of wrist and shoulder to be the determining factor. If a wrist is above shoulder height, the arm is in upward position. Finally, each arm is dealt with separately and that means 4 classes emerge: both arms down (down-down -- $1{,}146$ samples), left arm down and right arm up (down-up -- 813 samples), left arm up and right arm down (up-down -- 795 samples) and both arms up (up-up -- $1{,}050$ samples). Dataset with basic sports poses divided into these 4 classes will be from now on referred to as Directions Dataset.
 
-For more complex and convincing evaluation of developed models, I prepared one more set of labels with finer separation. The main thought is the same as for the Directions Dataset -- each arm is either pointing up or down, but one more feature was added. Each arm can be either bent in the elbow or not -- if the elbow angle is smaller than 135 degrees, arm is considered bent. All of the Directions Dataset classes have 2 possible options which creates 16 classes in total. Higher number of classes not only allows for more valuable testing of the model but also brings option of evaluating not only top-1 accuracy but also top-3 accuracy. When the correct class of a certain pose is not the one with the highest probability according to the classifier but still is the second or third, the model shown some ability to recognize poses too. Counts of samples for each class of the Bent Dataset are presented in the table \ref{tab:bent-dataset-counts}. Class names are derived from the Directions Dataset, only change is that when an arm in the given direction is bent, letter 'b' is placed in front of the direction.
+For more complex and convincing evaluation of developed models, I prepared one more set of labels with finer separation. The main thought is the same as for the Directions Dataset -- each arm is either pointing up or down, but one more feature was added. Each arm can be either bent in the elbow or not -- if the elbow angle is smaller than 135 degrees, arm is considered bent. All of the Directions Dataset classes have 2 possible options which creates 16 classes in total. Higher number of classes not only allows for more valuable testing of the model but also brings option of evaluating not only top-1 accuracy but also top-3 accuracy. When the correct class of a certain pose is not the one with the highest probability according to the classifier but still is the second or third, the model shown some ability to recognize poses too. Counts of samples for each class of the Bent Dataset are presented in Table~\ref{tab:bent-dataset-counts}. Class names are derived from the Directions Dataset, only change is that when an arm in the given direction is bent, letter `b' is placed in front of the direction.
 
 \begin{table}[!ht]
     \footnotesize
@@ -287,7 +307,7 @@ For more complex and convincing evaluation of developed models, I prepared one m
                 Class & \makecell{Sample \\ count} & Class & \makecell{Sample \\ count} & Class & \makecell{Sample \\ count} & Class & \makecell{Sample \\ count} \\
             \hline
             \hline
-            down-down & $1,005$ & bdown-down & $63$ & down-bdown & $48$ & bdown-bdown & $63$ \\
+            down-down & $1{,}005$ & bdown-down & $63$ & down-bdown & $48$ & bdown-bdown & $63$ \\
             \hline
             down-up & $399$ & bdown-up & $21$ & down-bup & $285$ & bdown-bup & $102$ \\
             \hline
@@ -297,7 +317,7 @@ For more complex and convincing evaluation of developed models, I prepared one m
             \hline
         \end{tabular}
     \end{center}
-    \caption{Distribution of sports pose images between all classes of the Bent Dataset. First word shows direction that the left arm is heading, second word represents the right arm. If the arm is bent, letter 'b' precedes the direction.}
+    \caption{Distribution of sports pose images between all classes of the Bent Dataset. First word shows direction that the left arm is heading, second word represents the right arm. If the arm is bent, letter `b' precedes the direction.}
     \label{tab:bent-dataset-counts}
 \end{table}
 
@@ -309,10 +329,10 @@ Directions Dataset has fairly equally distributed images between classes whereas
 
 Yoga sports poses are one the most complex among all sports poses, there are hundreds of possible poses and their variants. They can be also sorted into different sets according to their similarities. All these attributes make them the perfect candidate for a very difficult sports pose recognition task and, therefore, I propose yoga poses as a benchmark for the future development in this field.
 
-Verma et al. in \cite{verma2020yoga} present a new dataset Yoga-82 for human pose classification that is base on yoga poses. It contains over 28 400 annotated samples of 82 different yoga poses. The classes are sorted into 3-level hierarchy where each of the 82 poses are assigned a second and first-level class as well. This structure can be further used for recognition of poses that are projected into an embedding space since embeddings of poses from the same higher-level class can have similarities in the space.
+Verma et al. in \cite{verma2020yoga} present a new dataset Yoga-82 for human pose classification that is based on yoga poses. It contains over 28 400 annotated samples of 82 different yoga poses. The classes are sorted into 3-level hierarchy where each of the 82 poses are assigned a second and first-level class as well. This structure can be further used for recognition of poses that are projected into an embedding space since embeddings of poses from the same higher-level class can have similarities in the space.
 
 The dataset is available to download in form of URL links to each image sorted into files according to their classes. The images are under different creative common licenses. There is no script for downloading of the images as a part of the publication. Since the images are from various sources from the internet, their availability is out of reach of the dataset authors. In the time of publishing this thesis, there are already hundreds of images not available.
 
-The images differ in resolution and aspect ratio, therefore, some sort of preprocessing is necessary. Their variability is very high, they are captured both indoors and outdoors and with very different backgrounds. The displayed people differ in their gender, skin color, clothing and other visible characters. Some images even contain multiple people, text added over the pose in postproduction or the images are just a simple illustration of the pose, not a real photo. These additional features might not serve well for better generalization of the trained model, rather for confusion because of the unrealism.
+The images differ in resolution and aspect ratio, therefore, some sort of preprocessing is necessary. Their variability is very high, they are captured both indoors and outdoors and with very different backgrounds. The displayed people differ in their gender, skin color, clothing, and other visible characters. Some images even contain multiple people, text added over the pose in postproduction or the images are just a simple illustration of the pose, not a real photo. These additional features might not serve well for better generalization of the trained model, rather for confusion because of the unrealism.
 
 These images could be used for classification of the poses from embeddings but the more complicated task is learning the sports pose embeddings with a time-contrastive network. This process requires synchronized videos or at least images of the same scene from different viewpoints. I have not found such dataset online and therefore, I suspect it has to be recorded specifically for this task. One possible solution for making the dataset creation more feasible would be to partner with some yoga video producer. There is a chance they are filming their videos from multiple angles and could offer their raw recordings for such project. The variability of all recordings has to be taken into account. If they are from the same environment (e.g. indoor gym), the model will probably not generalize well to other surroundings (for example outdoors).

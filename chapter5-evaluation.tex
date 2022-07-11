@@ -2,7 +2,7 @@
 
 Models trained with self-supervision can be evaluated at two stages. Obviously, the accuracy of classification of given input is one way to do so. The other way is to evaluate embeddings either with loss function used for training of the encoder or visually after dimensionality reduction. All of these approaches are discussed in this chapter.
 
-At first, the sports pose embeddings are visually analyzed in section \ref{sec:visual}. Then, section \ref{sec:evaluate-encoder} presents encoder's accuracy on validation dataset and how it is effected by the number of dimensions of the embedding space. Finally, accuracy of the classification itself on validation dataset is compared to supervised model with same architecture in section \ref{sec:comparison}. Results of each evaluation are discussed in their respective sections. Experiments were done fairly and no results were cherry-picked.
+At first, the sports pose embeddings are visually analyzed in Section~\ref{sec:visual}. Then, Section~\ref{sec:evaluate-encoder} presents encoder's accuracy on validation dataset and how it is affected by the number of dimensions of the embedding space. Finally, accuracy of the classification itself on validation dataset is compared to supervised model with same architecture in Section~\ref{sec:comparison}. Results of each evaluation are discussed in their respective sections. Experiments were done fairly and no results were cherry-picked.
 
 \section{\label{sec:visual}Visual Analysis of Latent Space}
 
@@ -44,11 +44,11 @@ Distances of data points from themselves $p_{i i}$ and $q_{i i}$ are set to zero
     \frac{\partial C}{\partial y_{i}} = 4 \sum \limits_{j} (p_{i j} - q_{i j}) (y_{i} - y_{j}) (1 + || {y}_{i} - {y}_{j} ||^2)^{-1}.
 \end{equation}
 
-\subsection{Analysis of embeddings with t-distributed Stochastic Neighbor Embedding}
+\subsection{Analysis of Embeddings with t-distributed Stochastic Neighbor Embedding}
 
-The encoder presented in section \todo{number} transforms image of sports pose into 256-dimensional vector embedding. The goal is to have this embedding describe only the sports pose and ignore background of the scene and look of the person doing the pose. Sports poses similar to each other should be closer to each other in the embedding space than poses that are completely different. If only one arm moved from one image frame to another, their embeddings should be very similar. The same pose performed by other person in a different place and even photographed from a different angle should have the same or at least very similar embedding.
+The encoder presented in Section~\ref{sec:encoder} transforms image of sports pose into 64-dimensional vector embedding. The goal is to have this embedding describe only the sports pose and ignore background of the scene and look of the person doing the pose. Sports poses similar to each other should be closer to each other in the embedding space than poses that are completely different. If only one arm moved from one image frame to another, their embeddings should be very similar. The same pose performed by other person in a different place and even photographed from a different angle should have the same or at least very similar embedding.
 
-The whole Directions Dataset introduced in section \ref{sec:dataset-labels} includes 3804 divided into 4 classes according to arm positions of the person -- each arm is either pointing down or up and therefore, the corresponding classes are named \texttt{down-down}, \texttt{down-up}, \texttt{up-down} or \texttt{up-up}. Positions where both arms are in a downward direction should be relatively far from each other while the other 2 classes can be placed somewhere in between the edge cases. The dataset consists of 10 scenes, each filmed from 3 angles. Projected embedding are displayed in the figure \ref{fig:t-sne}.
+The whole Directions Dataset introduced in Section~\ref{sec:dataset-labels} includes $3{,}804$ divided into 4 classes according to arm positions of the person -- each arm is either pointing down or up and therefore, the corresponding classes are named \texttt{down-down}, \texttt{down-up}, \texttt{up-down} or \texttt{up-up}. Positions where both arms are in a downward direction should be relatively far from each other while the other 2 classes can be placed somewhere in between the edge cases. The dataset consists of 10 scenes, each filmed from 3 angles. Projected embedding are displayed in Figure~\ref{fig:t-sne}.
 
 \begin{figure}[!ht]
     \centering
@@ -94,7 +94,7 @@ The whole Directions Dataset introduced in section \ref{sec:dataset-labels} incl
             \legend{down-down, down-up, up-down, up-up}
         \end{axis}
     \end{tikzpicture}
-    \caption{Embeddings of all 3804 samples from the Directions Dataset projected from 256 dimensions to 2D with the t-SNE algorithm. Data points are colored according to their class. Parameters of the t-SNE were 600 iterations, perplexity 16, learning rate 10 and the algorithm ran without any supervision based on sample labels.}
+    \caption{Embeddings of all $3{,}804$ samples from the Directions Dataset projected from 64 dimensions to 2D with the t-SNE algorithm. Data points are colored according to their class. Parameters of the t-SNE were 600 iterations, perplexity 32, learning rate 10 and the algorithm ran without any supervision based on sample labels.}
     \label{fig:t-sne}
 \end{figure}
 
@@ -108,7 +108,7 @@ The encoder itself is just a single component in the whole model that performs t
 
 The encoder is trained with a triplet loss function whose aim is to have two embeddings of different images of the same sports pose closer to each other than two embeddings of a distinct pose. The distance between correct and false pairs should also be greater than some fixed value called margin. Therefore, the same function can be also used to evaluate the encoder. The only difference is that the margin is set to 0, whereas during the learning process, the value is above 0.
 
-The objective of this experiment was to evaluate the performance of encoder model on different dimensionalities of the embedding space. Numbers of dimensions used for testing were 16, 32, 64, 128, 256 and 512. Margin of the triplet loss was set to $0.1$. The model was trained for 50 epochs on the same training data and evaluated on the validation subset after each epoch. The dataset used for this experiment is Upper Body Dataset from section \ref{sec:dataset-upper-body}. Dataset was split so that $90 \%$ of it was used for training and $10 \%$ for validation. Each model was trained $5 \times$ on the same dataset but shuffled with a distinct seed. To provide consistency of training data between different embedding space dimensionalities, the seed had the same value from 0 to 4 in the 5 runs. The best validation accuracy of all epochs was taken as the model's accuracy. The obtained results are presented in form of boxplots in the figure \ref{fig:encoder-embedding}. Format of the boxplots is from bottom: minimum, first quartile, median, third quartile and maximum.
+The objective of this experiment was to evaluate the performance of encoder model on different dimensionalities of the embedding space. Numbers of dimensions used for testing were 16, 32, 64, 128, 256, and 512. Margin of the triplet loss was set to $0.1$. The model was trained for 50 epochs on the same training data and evaluated on the validation subset after each epoch. The dataset used for this experiment is Upper Body Dataset from Section~\ref{sec:dataset-upper-body}. Dataset was split so that $90\,\%$ of it was used for training and $10\,\%$ for validation. Each model was trained $5 \times$ on the same dataset but shuffled with a distinct seed. To provide consistency of training data between different embedding space dimensionalities, the seed had the same value from 0 to 4 in the 5 runs. The best validation accuracy of all epochs was taken as the model's accuracy. The obtained results are presented in form of boxplots in Figure~\ref{fig:encoder-embedding}. Format of the boxplots is from bottom: minimum, first quartile, median, third quartile, and maximum.
 
 \begin{figure}[!ht]
     \centering
@@ -203,7 +203,7 @@ The objective of this experiment was to evaluate the performance of encoder mode
             ] coordinates {};
         \end{axis}
     \end{tikzpicture}
-    \caption{When an image of a sports pose is encoded into a vector in an embedding space, its dimensionality can play a role in the performance of the model. The encoder model was tested on a number of dimensions between 16 a 512. The best median accuracy on validation data had an embedding space with 64 dimensions.}
+    \caption{When an image of a sports pose is encoded into a vector in an embedding space, its dimensionality can play a role in the performance of the model. The encoder model was tested on a number of dimensions between 16 and 512. The best median accuracy on validation data had an embedding space with 64 dimensions.}
     \label{fig:encoder-embedding}
 \end{figure}
 
@@ -215,7 +215,7 @@ Dataset with very high diversity in sports poses requires more information to be
 
 The main advantage of models trained in a self-supervised manner is their ability to perform well with dataset containing smaller number of labeled data than what would supervised training needed. This advantage is shown in evaluation done on different-sized datasets in the following experiments.
 
-The model described in the previous chapter (\todo{chapter link}) is used as the self-supervised learning benchmark. For supervised learning representative, the ResNet50 model is chosen and it is not alternated in any way \cite{he2015deep}. The architectures of both networks are very similar as can be seen in the table \ref{tab:self-supervised-vs-supervised}, their backbones are the same, only their last few layers are different, and therefore, the evaluations should not be distorted because of the models.
+The encoder model described in Section~\ref{sec:encoder} is used as the self-supervised learning benchmark. For supervised learning representative, the ResNet50 model is chosen and it is not alternated in any way \cite{he2015deep}. The architectures of both networks are very similar as can be seen in Table~\ref{tab:self-supervised-vs-supervised}, their backbones are the same, only their last few layers are different, and therefore, the evaluations should not be distorted because of the models.
 
 \begin{table}[!ht]
     \begin{center}
@@ -231,9 +231,9 @@ The model described in the previous chapter (\todo{chapter link}) is used as the
             \hline
                 \makecell{Backbone \\ ResNet50} & \makecell{Padding -- (230, 230, 3) \\ \vdots \\ Pooling -- (2048)} & \makecell{Padding -- (230, 230, 3) \\ \vdots \\ Pooling -- (2048)} & \makecell{Backbone \\ ResNet50} \\
             \hline
-                & Dense -- (256) & \multirow{4}{*}{Dense -- (4)} & \multirow{4}{*}{Label} \\
+                & Dense -- (64) & \multirow{4}{*}{Dense -- (4)} & \multirow{4}{*}{Label} \\
             \cline{1-2}
-                Embedding & L2 Normalize -- (256) & & \\
+                Embedding & L2 Normalize -- (64) & & \\
             \cline{1-2}
                 & Dense -- (64) & & \\
             \cline{1-2}
@@ -241,27 +241,27 @@ The model described in the previous chapter (\todo{chapter link}) is used as the
             \hline
         \end{tabular}
     \end{center}
-    \caption{Comparison of architectures of self-supervised and supervised models. Their input, backbone and output are identical, only the top of self-supervised model is adjusted for the self-supervised training.}
+    \caption{Comparison of architectures of self-supervised and supervised models. Their input, backbone, and output are identical, only the top of self-supervised model is adjusted for the self-supervised training.}
     \label{tab:self-supervised-vs-supervised}
 \end{table}
 
 Since each model is trained in a different way, it is not trivial to set the borderline for number of epochs used for training. For that reason, each model was trained for sufficient number of epochs after which it no longer improved on validation data. The self-supervised model consists of two parts -- the encoder which creates the embedding from an image and the recognizer which classifies the pose from the embedding. The encoder was trained for 30 epochs and the recognizer for 20 epochs. The encoder was trained once and stayed the same for the whole experiment while the recognizer was fitted for every dataset sample. The supervised model was trained for 50 epochs on each dataset sample.
 
-Dataset used for these experiments is thoroughly described in section \ref{sec:dataset-sports-poses} -- Upper Body Dataset. It contains 3804 images of 1268 poses, each captured from 3 different angles. The poses are not necessarily unique but the images differ in background and clothes of the person. Overall, there are 10 different scenes with 2 possible backgrounds and different clothing of the person in each of the scenes. The poses represent possible movements of person's arms in all directions and joints' bendings, other parts of the body such as torso, head or legs are not moving.
+Dataset used for these experiments is thoroughly described in Section~\ref{sec:dataset-sports-poses} -- Upper Body Dataset. It contains $3{,}804$ images of $1{,}268$ poses, each captured from 3 different angles. The poses are not necessarily unique but the images differ in background and clothes of the person. Overall, there are 10 different scenes with 2 possible backgrounds and different clothing of the person in each of the scenes. The poses represent possible movements of person's arms in all directions and joints' bendings, other parts of the body such as torso, head or legs are not moving.
 
 First experiment is done on the Directions Dataset which contains 4 classes that differ in position of arms -- left or right arm is pointing either down or up. Since some positions may be questionable, the rule of thumb during labeling of data was whether the wrist is above or below the corresponding shoulder. The second experiment was done on Bent Dataset with 16 classes that extended the Directions Dataset with one more attribute -- whether the arms are bent or not.
 
 While the first experiment only evaluates the accuracy of choosing the correct class (top-1 accuracy), the second one evaluates also accuracy whether the correct class is within 3 of the most probable outcomes (top-3 accuracy). Decision to provide results in this format was made based on the number of classes in used datasets.
 
-Both of tested models were fitted on datasets of different sizes and then their accuracy on never-seen validation data was evaluated. Before each training the whole dataset was shuffled and then divided into training and validation subsets. The portion of data used for training was the changing variable and it ranged from $0.9$ to $0.025$. The rest of the data where always used for validation. This approach decreases variance in the training dataset and concurrently increases it in the validation dataset. Because of this, model's ability to generalize well is displayed.
+Both of tested models were fitted on datasets of different sizes and then their accuracy on never-seen validation data was evaluated. Before each training the whole dataset was shuffled and then divided into training and validation subsets. The portion of data used for training was the changing variable and it ranged from $0.9$ to $0.025$. The rest of the data were always used for validation. This approach decreases variance in the training dataset and concurrently increases it in the validation dataset. Because of this, model's ability to generalize well is displayed.
 
 To keep the experiment fair, dataset for each experiment was shuffled with the same seed for both models and, therefore, they had the same data for training and evaluating. For each dataset split portion, 10 runs of fitting and evaluating were done, each one with different seed. Seeds were chosen deterministically as integers from $0$ to $9$. Accuracy on validation data was then averaged over all 10 runs to get the final accuracy of the model for a given fraction of training data.
 
-The results of the experiment on Directions Dataset are shown in the figure \ref{fig:self-supervised-vs-supervised-directions}. For training dataset portions down to $15 \%$ (which equals $570$ of the $3804$ images used for training), the performances of self-supervised and supervised models are on a par. When the training dataset portion decreases to $12.5 \%$ ($475$ of $3804$ images) the supervised model starts to degrade and with just $2.5 \%$ images it approaches accuracy $25 \%$ which is for 4 classes basically a random guess. While the self-supervised model keeps its accuracy above $60 \%$ even when trained on $2.5 \%$ data which equals to $95$ images for training and $3709$ for validation.
+The results of the experiment on Directions Dataset are shown in Figure~\ref{fig:self-supervised-vs-supervised-directions}. For training dataset portions down to $15\,\%$ (which equals $570$ of the $3{,}804$ images used for training), the performances of self-supervised and supervised models are on a par. When the training dataset portion decreases to $12.5\,\%$ ($475$ of $3{,}804$ images) the supervised model starts to degrade and with just $2.5\,\%$ images it approaches accuracy $25\,\%$ which is for 4 classes basically a random guess. While the self-supervised model keeps its accuracy above $60\,\%$ even when trained on $2.5\,\%$ data which equals to $95$ images for training and $3{,}709$ for validation.
 
-Experiment number 2 with training and evaluation done on Bent Dataset provides not only top-1 but also top-3 accuracy. The results are presented in the figure \ref{fig:self-supervised-vs-supervised-bent}. While the previous experiment included only 4 classes, the Bent Dataset consists of 16 classes and this difference made an impact on the results. The accuracy of both models dropped down by approximately 0.2 overall. The self-supervised model performed better than supervised model in all provided dataset splits. This is a display of one of the advantages of self-supervised learning, it adapts better to a higher number of classes since it already learned the key features on unlabeled data. When the amount of training samples approaches less than 10 for each class overall (portion of 0.025), the accuracy of supervised model drops significantly while the self-supervised model's accuracy stabilizes.
+Experiment number 2 with training and evaluation done on Bent Dataset provides not only top-1 but also top-3 accuracy. The results are presented in Figure~\ref{fig:self-supervised-vs-supervised-bent}. While the previous experiment included only 4 classes, the Bent Dataset consists of 16 classes and this difference made an impact on the results. The accuracy of both models dropped down by approximately 0.2 overall. The self-supervised model performed better than supervised model in all provided dataset splits. This is a display of one of the advantages of self-supervised learning, it adapts better to a higher number of classes since it already learned the key features on unlabeled data. When the amount of training samples approaches less than 10 for each class overall (portion of 0.025), the accuracy of supervised model drops significantly while the self-supervised model's accuracy stabilizes.
 
-The top-3 accuracy reveals important information about the supervised model when trained on $10 \%$ of the Bent Dataset -- part of the plot with dashed line. The predicted results degrade in a way that the top-3 accuracy equals to $1.0$ for more and more of the experiment runs and the top-3 accuracy suddenly rises. Since the top-1 accuracy declines, the model is not performing better, rather it found some workaround that produces these improbable results. The model is also not trained to maximize the top-3 accuracy, it is trying to minimize the loss function. Self-supervised learning clearly provides results with higher or equal accuracy for all experiments and shows its advantages mainly on datasets with low number of training samples.
+The top-3 accuracy reveals important information about the supervised model when trained on $10\,\%$ of the Bent Dataset -- part of the plot with dashed line. The predicted results degrade in a way that the top-3 accuracy equals to $1.0$ for more and more of the experiment runs and the top-3 accuracy suddenly rises. Since the top-1 accuracy declines, the model is not performing better, rather it found some workaround that produces these improbable results. The model is also not trained to maximize the top-3 accuracy, it is trying to minimize the loss function. Self-supervised learning clearly provides results with higher or equal accuracy for all experiments and shows its advantages mainly on datasets with low number of training samples.
 
 \begin{figure*}[!ht]
     \begin{subfigure}[b]{\textwidth}

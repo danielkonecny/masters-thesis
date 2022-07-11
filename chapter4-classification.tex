@@ -1,46 +1,19 @@
-\chapter{\label{chap:classification}Classification of Sports Poses from Images}
+\chapter{\label{chap:classification}Recognition of Sports Poses from Images}
 
+Recognition or classification is a task of assigning a class from a defined set of classes to an image according to what is displayed in it. When video is on the input, it has to be divided into single frames that are handled and classified individually. Most common approach to process image data is with convolutional neural networks that are explained into depth in Section~\ref{sec:cnn}. Models in this thesis also use architecture that relies on such network.
 
-\blindtext
+Whereas supervised learning is done in most cases with a single model that has an image on the input and outputs probabilites of the image belonging to available classes. Self-supervised learning usually requires two models that are trained separately and are working together after they are fitted to the data. Therefore, the input and output of the self-supervised model is the same as for supervised trained model once it is fitted. The first of two models that form the described architecture is usually called encoder and its goal is to find the most valuable representation of the input in an embedding space. Implementation of this model is described into depth in Section~\ref{sec:encoder}. The embeddings produced by the encoder are used as an input to the second model. Its objective is to find the most probable class the embedding is representing. Thorough description of the second model can be found in Section~\ref{sec:classifier}.
 
-\blindtext
+\section{\label{sec:encoder}Representing Sports Poses in Latent Space}
 
-\section{Representing Sports Poses in Latent Space}
+Crucial part of a model that is trained with self-supervision is an encoder. It uses some information that is naturally contained in the dataset as a supervisor during the learning process. In case of this thesis, the supervision is provided with multiple synchronized videos of the same scene. Its target is to find the most efficient yet the most descriptive embedding of the input. If the goal is to recognize sports poses, the best embedding describes the whole body in the correct position but ignores all the specifics of the person and the environment around.
+
+On the input of the model is an image with a specific resolution and channels in the correct format. On the output is an embedding vector describing the input image in the set dimensionality. The embedding vectors are sometimes restricted with condition to sit on a unit hypersphere. That means that squared values in all dimensions of the vector have to sum up to 1.
 
 To obtain embeddings of the images, a convolutional neural network is used. This thesis uses a ResNet architecture with weights trained on ImageNet dataset. The head of the network is replaced to provide embeddings as vectors in $d$-dimensional latent space. The network is trained on triplet loss in the self-supervised manner.
 
-\subsection{Neural Network Trained with Triplet Loss}
-
-\blindtext
-
-\blindtext
-
-\begin{figure*}[ht]\centering
-  \centering
-  \includegraphics{figures/placeholder.pdf}
-  \caption{All combinations of triplets in a grid. Maybe draw as arrows across the grid.}
-  \label{TripletsInGrid}
-\end{figure*}
-
-\blindtext
-
-\section{Models for Sports Pose Classification from Embeddings}
+\section{\label{sec:classifier}Sports Pose Classification from Embeddings}
 
 The sports poses are encoded as $d$-dimensional latent vectors. Then, simple models that solve the classification problem are proposed. These models do not require many annotated samples to have good performance. After that, more advanced models are proposed.
-\blindtext
-
-\blindtext
-
-\subsection{K-Nearest Neighbors Classifier}
-
-K-nearest neighbors classifier is try to find the prevailing class of the nearest latent vectors to classify the new sample.
-\blindtext
-
-\blindtext
-
-\subsection{Neural Networks with Dense Layers}
 
 The sports pose latent vector classification can be solved with more advanced models, such as neural networks with dense layers.
-\blindtext
-
-\blindtext
