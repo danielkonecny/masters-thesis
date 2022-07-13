@@ -1,19 +1,104 @@
 \chapter{\label{chap:classification}Recognition of Sports Poses from Images}
 
-Recognition or classification is a task of assigning a class from a defined set of classes to an image according to what is displayed in it. When video is on the input, it has to be divided into single frames that are handled and classified individually. Most common approach to process image data is with convolutional neural networks that are explained into depth in Section~\ref{sec:cnn}. Models in this thesis also use architecture that relies on such network.
+Recognition or classification is a task of assigning a class from a defined set of classes to an image according to what is displayed in it. When video is on the input, it is often divided into single frames that are handled and classified individually. Most common approach to process image data is with convolutional neural networks that are explained into depth in Section~\ref{sec:cnn}. Models in this thesis also use architecture that relies on such networks.
 
-Whereas supervised learning is done in most cases with a single model that has an image on the input and outputs probabilites of the image belonging to available classes. Self-supervised learning usually requires two models that are trained separately and are working together after they are fitted to the data. Therefore, the input and output of the self-supervised model is the same as for supervised trained model once it is fitted. The first of two models that form the described architecture is usually called encoder and its goal is to find the most valuable representation of the input in an embedding space. Implementation of this model is described into depth in Section~\ref{sec:encoder}. The embeddings produced by the encoder are used as an input to the second model. Its objective is to find the most probable class the embedding is representing. Thorough description of the second model can be found in Section~\ref{sec:classifier}.
+Whereas supervised learning is done in most cases with a single model that has an image on the input and outputs probabilities of the image belonging to available classes. Self-supervised learning usually requires two models that are trained separately and are working together after they are fitted to the data. Therefore, the input and output of the self-supervised model is the same as for supervised trained model once it is fitted. The first of two models that form the described architecture is usually called encoder and its goal is to find the most valuable representation of the input in an embedding space. Implementation of this model is described into depth in Section~\ref{sec:encoder}. The embeddings produced by the encoder are used as an input to the second model, the classifier. Its objective is to find the most probable class the embedding is representing. Thorough description of the second model can be found in Section~\ref{sec:classifier}.
+
+Another model for sports pose recognition but trained with supervision was also implemented to provide a comparison in evaluation. This network is introduced in Section~\ref{sec:supervised-classifier} in contrast to the models proposed before. Finally, Section~\ref{sec:additional-usage} discusses how the sport pose embeddings could be used in future research in this topic.
 
 \section{\label{sec:encoder}Representing Sports Poses in Latent Space}
 
 Crucial part of a model that is trained with self-supervision is an encoder. It uses some information that is naturally contained in the dataset as a supervisor during the learning process. In case of this thesis, the supervision is provided with multiple synchronized videos of the same scene. Its target is to find the most efficient yet the most descriptive embedding of the input. If the goal is to recognize sports poses, the best embedding describes the whole body in the correct position but ignores all the specifics of the person and the environment around.
 
-On the input of the model is an image with a specific resolution and channels in the correct format. On the output is an embedding vector describing the input image in the set dimensionality. The embedding vectors are sometimes restricted with condition to sit on a unit hypersphere. That means that squared values in all dimensions of the vector have to sum up to 1.
+On the input of the model is an image with a specific resolution and channels in the correct format. On the output is an embedding vector describing the input image in the set dimensionality. Section~\ref{sec:architecture} specifies the model's architecture into detail.
 
-To obtain embeddings of the images, a convolutional neural network is used. This thesis uses a ResNet architecture with weights trained on ImageNet dataset. The head of the network is replaced to provide embeddings as vectors in $d$-dimensional latent space. The network is trained on triplet loss in the self-supervised manner.
+\subsection{\label{sec:architecture}Architecture of the Encoder}
+
+The input is always a single image that needs no preprocessing because all the necessary operations were already done with the dataset preparation tool from previous chapter. In case of a smaller dataset size, to gain more generalization, a data augmentation is also implemented. It is not recommended to use any rotation nor horizontal/vertical flipping augmentation because of the model's dependence on positions of body parts and distinguishing between left and right-hand sides. Augmentations that alter colors, brightness and contrast are a favorable option and are used in this thesis.
+
+To obtain embeddings of the images, a convolutional neural network is used. This thesis uses a ResNet-50 architecture with weights trained on ImageNet dataset \cite{he2015deep-resnet}. The head of the network is replaced to provide embeddings as vectors in $d$-dimensional latent space. This is done with a single dense layer after the data from the last convolution are processed by average pooling and flatten layers. The number of units of the dense layer and the dimensionality of the embedding space equal.
+
+The embedding vectors are sometimes restricted with condition to sit on a unit hypersphere. That means that squared values in all dimensions of the vector have to sum up to 1. This is done to provide normalization of the individual values in all dimensions. This restriction can be fulfilled with L2 normalization used as the last layer after the previously mentioned dense layer. This is the output layer of the whole model.
+
+The model was trained with Adam optimizer. Underlying concepts and the calculation of Adam are presented in Section~\ref{sec:ml}. Parameters were configured to $lr = 0.001, \beta_1 = 0.9, \beta_2 = 0.999, \epsilon = 10^{-7}$.
+
+The network is trained on triplet loss in the self-supervised manner \cite{facenet-triplet-loss}. This loss function is described in Section~\ref{sec:triplet-loss} and Section~\ref{sec:other-loss} proposes possible improvements in this direction that were not implemented. Since the triplet loss uses Euclidean distance to compare embeddings, its effective calculation is crucial to a good performance of the model. The function is implemented to compute loss over the whole batch of triplets. It uses simple subtraction and squaring in each dimension and then a sum to reduce all the dimensions into a single number. The loss is only influenced by the triplets that do not have the positive sample closer to the anchor than the negative sample by a set margin. Value of the loss is a sum of their differences in positive-anchor and negative-anchor distances. When computing accuracy, the margin is not taken into account.
+
+The training of the model can be divided into two parts -- fitting and fine-tuning. When the encoder is fitted, only the head of the network, weights of the last dense layer, is adjusted. The ResNet-50 backbone has its weights locked to the ImageNet-pretrained values. After that, a fine-tuning process can be turned on as well. Fine-tuning starts with unfreezing of all the weights of the backbone except the ones used for batch normalization. Then, a learning rate is changed from $10^{-3}$ to $10^{-5}$ to prevent large changes and possible loss of information already acquired from fitting and pretraining. After that, the model's weights from the epoch that provided best results on validation dataset during fitting are restored and fine-tuning is launched as a casual fitting. From the experiments done, it seems the encoder can provide very good results just with fitting and fine-tuning provides almost no improvement in the model's accuracy.
+
+Fitting of the model is done in epochs with dataset divided into mini-batches (further only as batches). Each batch contains a fixed number of anchor-positive-negative triplets, only the last batch of the epoch can be smaller. The batch size can be set according to the memory constraints of the training machine, in most cases between 32 and 256. Since the network is designed to only accept one image as an input, the triplets have to be merged together into a ``merged" batch. Its size is correspondingly $3 \times$ as large. After all the individual images are encoded into embeddings, they can be split into the original triplets again. The merging and splitting algorithms have to be deterministic and mutually reversed to ensure all triplets stay the same. Only after that, loss of the whole batch can be computed. Finally, gradients are computed from the loss and applied to the network's weights.
+
+The model reports loss and accuracy on training and validation datasets in a such format that can be further analysed with TensorBoard. It also saves model's weights after each epoch to allow for restoring of the best-performing model. The implementation also allows to restore weights and continue fitting and with that divide the training process into multiple sessions.
 
 \section{\label{sec:classifier}Sports Pose Classification from Embeddings}
 
-The sports poses are encoded as $d$-dimensional latent vectors. Then, simple models that solve the classification problem are proposed. These models do not require many annotated samples to have good performance. After that, more advanced models are proposed.
+After the sports poses are encoded into a $d$-dimensional embedding vectors, various operations can be done with them. This thesis only implements classification, the other possibilities are discussed in Section~\ref{sec:additional-usage}. The main advantage of a classifier that has vector embeddings on the input instead of images is that the important information is already extracted and, therefore, the classifying is a lot easier task.
 
-The sports pose latent vector classification can be solved with more advanced models, such as neural networks with dense layers.
+Classifier in this thesis is a simple neural network with one hidden dense layer. The input layer has the identical size as the dimensionality of the embedding space and the output layer corresponds to the number of classes the sports pose can be classified to.
+
+The size of the dense layer (number of units) is a hyperparameter that can be tuned according to the difficulty of the task that is being solved. Since all the needed information is already effectively encoded into the embedding, it is not advised to use dense layer with more units than the input layer has. Likely, no other information will be gathered from the data and, therefore, there is no need to represent it with more values. After the experiments were done, one dense layer performed on par with networks with two or three hidden dense layers. Thus, I chose a single dense layer with 64 units for the classifier model implemented in this thesis. To introduce some non-linearity to the model, a Leaky ReLU with $\alpha = 0.01$ is used as an activation function of this layer.
+
+The output of the classifier uses softmax activation function to output the probabilities of each class that sum up to one. The training is optimized with Adam optimizer with parameters set to $lr = 0.001, \beta_1 = 0.9, \beta_2 = 0.999, \epsilon = 10^{-7}$ and as a loss function is used categorical cross-entropy which corresponds to classifying tasks with more than two possible outcomes.
+
+\section{\label{sec:supervised-classifier}Classifier Trained with Supervision}
+
+To evaluate effectiveness of the self-supervision, a supervised-trained model is implemented as a comparison. The main condition is to make both models as identical as possible to not distort the experiments with model dissimilarities. The model is presented in comparison to the self-supervised model that was introduced earlier.
+
+The main parts of both networks are completely the same, they both have ResNet-50 as a backbone. This means that inputs of the networks are also identical. They only differ in the network heads -- self-supervised model needs more dense layers to account for the embeddings. The architecture comparison can be seen in Table~\ref{tab:self-supervised-vs-supervised}. The models optimizer is Adam with the same parameters as for both of the self-supervised models -- $lr = 0.001, \beta_1 = 0.9, \beta_2 = 0.999, \epsilon = 10^{-7}$. Loss function is identical to the classifier from self-supervised model -- categorical cross-entropy.
+
+\begin{table}[!ht]
+    \begin{center}
+        \begin{tabular}{ |c|c||c|c| }
+            \hline
+                \multicolumn{2}{|c||}{Self-Supervised Model} & \multicolumn{2}{c|}{Supervised Model} \\
+            \hline
+            \hline
+            Description & Layer -- Shape & Layer -- Shape & Description \\
+            \hline
+            \hline
+                Image & Input -- (224, 224, 3) & Input -- (224, 224, 3) & Image \\
+            \hline
+                \makecell{Backbone \\ ResNet50} & \makecell{Padding -- (230, 230, 3) \\ \vdots \\ Pooling -- (2048)} & \makecell{Padding -- (230, 230, 3) \\ \vdots \\ Pooling -- (2048)} & \makecell{Backbone \\ ResNet50} \\
+            \hline
+                & Dense -- (64) & \multirow{4}{*}{Dense -- (4)} & \multirow{4}{*}{Label} \\
+            \cline{1-2}
+                Embedding & L2 Normalize -- (64) & & \\
+            \cline{1-2}
+                & Dense -- (64) & & \\
+            \cline{1-2}
+                Label & Dense -- (4) & & \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \caption{Comparison of architectures of self-supervised and supervised models. Their input, backbone, and output are identical, only the top of self-supervised model is adjusted for the self-supervised training.}
+    \label{tab:self-supervised-vs-supervised}
+\end{table}
+
+Although the models trained with supervision and self-supervision have almost the same architecture, the training process vastly differs. With the different approach to learning of the data structure, the number of parameters that have to be fitted is also different. Table~\ref{tab:selfsupervised-vs-supervised-params} illustrates the contrast between them.
+
+\begin{table}[!ht]
+    \begin{center}
+        \begin{tabular}{ |c||c|c|c|c| }
+            \hline
+                Model & \makecell{Self-Supervised \\ Encoder (fit)} & \makecell{Self-Supervised \\ Encoder (fine-tune)} & \makecell{Self-Supervised \\ Classifier} & Supervised \\
+            \hline
+            \hline
+                \makecell{Trained \\ Parameters} & $131{,}136$ & $23{,}665{,}728$ & $4{,}420$ & $23{,}542{,}788$ \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \caption{Different training procedures require different number of parameters to be trained. This table compares them. Self-supervised model encodes the input into a 64-dimensional embedding space and the number of classes on the output is 4, which also affects the parameter count. The self-supervised model mostly trains parameters of the encoder with fitting (fine-tuning did not bring significantly better results) and then parameters of the classifier. Their sum is the best comparison to the supervised model's number of parameters -- $135{,}556$ and $23{,}542{,}788$.}
+    \label{tab:selfsupervised-vs-supervised-params}
+\end{table}
+
+In this chapter, only static data were shown. Performance of each model on validation dataset is presented and discussed in following Chapter~\ref{chap:evaluation}. Both models perform very different when they are introduced only a lower number of training samples. Results of these experiments are shown in Section~\ref{sec:evaluation-comparison}.
+
+\section{\label{sec:additional-usage}Additional Usage of Sports Pose Encodings}
+
+This thesis only discusses classification of sports poses from their embedding vectors but this is not the only possible usage of such information. In this section, I propose several other possibilities how the information could be processed.
+
+While classification assigns a class to an embedding vector, another information could be assigned as well. A very common task in this field is a pose estimation, which can include several different information about a human pose such as joints position and orientation of different body parts. Obtaining this information just from an embedding could be very useful since labeling of pose estimation dataset is even more time-consuming than labeling of simple classification dataset.
+
+There might be also possibility to perform operations on embedding vectors such as addition or subtraction to obtain embeddings of poses that are not captured. This could be practically used to classify poses that are not even part of the training data and the model has not seen them or at least it could help lower down even more the required number of training samples.
+
+Generally, the implemented tools could also be used to another classification problem that includes an object that changes poses or a similar challenge. It could not only capture humans but also animals, robots or machines.

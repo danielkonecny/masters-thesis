@@ -229,7 +229,7 @@ Inception modules also consist of the convolution layers with filter sizes $3 \t
 
 \textit{Residual blocks} made a vast impact on the development of convolution neural networks. While the recognition problems got more complicated and datasets enormous, the need to make CNNs deeper arose. Unfortunately, performance of the networks did not improve with just adding more layers. Gradients could not be back-propagated all the way to initial layers.
 
-Solution of this problem came with residual blocks that introduced a simple connection that bypassed blocks with convolution and pooling, as shown in Figure~\ref{fig:residual}. This connection symbolizes a simple identity function, it takes the input and outputs it unchanged. When such identity connection bypasses every convolution block, the neural network can basically work as an identity function. The same principle can be applied when gradients are computed, therefore, larger gradients are back-propagated to the initial layers \cite{he2015deep}.
+Solution of this problem came with residual blocks that introduced a simple connection that bypassed blocks with convolution and pooling, as shown in Figure~\ref{fig:residual}. This connection symbolizes a simple identity function, it takes the input and outputs it unchanged. When such identity connection bypasses every convolution block, the neural network can basically work as an identity function. The same principle can be applied when gradients are computed, therefore, larger gradients are back-propagated to the initial layers \cite{he2015deep-resnet}.
 
 \begin{figure*}[ht]\centering
     \centering
@@ -269,14 +269,6 @@ Nowadays, models are trained on datasets of millions or even billions of data po
     \caption{Example of Convolutional Neural Network architecture.}
     \label{fig:cnn-example}
 \end{figure*}
-
-\blindtext
-
-\blindtext
-
-\blindtext
-
-\blindtext
 
 \subsection{Current Advances in Sports Pose Recognition}
 
@@ -320,7 +312,7 @@ This thesis uses models called time-contrastive networks (TCNs) introduced in \c
 
 Self-supervised models use different loss functions that suit their specific approach to solving the problem. As described in the previous paragraphs, self-supervised learning has many different forms and, therefore, architectures vary in many ways. Time-contrastive network has to learn to represent the object in the image independently on the viewpoint. Images from the same viewpoint can differ just a little in time but their image embeddings should be different if the observed object changed. Whereas images from different viewpoints at the same time can be entirely different, only the observed object is constant. Therefore, their embeddings should be reasonably similar. Such challenge can be solved with loss function called the triplet loss.
 
-\subsection{Triplet Loss Function}
+\subsection{\label{sec:triplet-loss}Triplet Loss Function}
 
 Triplet loss function pushes embeddings of similar data closer together and pulls embeddings of diverse data further apart. Its main goal is learning data representation in a $d$-dimensional Euclidean space. Inputs of the function are 3 data embeddings -- anchor, positive, and negative. Anchor and positive should be closer to each other than anchor and negative. It can be thought of as anchor and positive belonging to the same class and negative to a different one \cite{facenet-triplet-loss}.
 
@@ -370,7 +362,7 @@ The triplet selection is an important part of the whole training process. When t
 
 In this thesis, with time-contrastive learning method, hard triplets cannot be computed in any way. Hard positive pair is enforced by making the viewpoints of the images as different as possible. Since anchor and positive images are taken from different viewpoints, the background of the scene and light conditions can vary. Also, just by filming the scene from different angles, the object can look completely different. Hard negative pair condition can be fulfilled by choosing image from the same viewpoint as for the anchor image but with a slightly different timestamp. How much should the timestamp differ depends on the scene itself. If it is very dynamic, the images can be just few frames apart, if it stays the same for a longer time, a different approach has to be chosen. One possibility to choose a hard negative pair from video is by computing optical flow from the video and use it to detect movement. This procedure is thoroughly discussed in Section~\ref{sec:motion-detect}.
 
-\subsection{Other Metric Learning Loss Functions}
+\subsection{\label{sec:other-loss}Other Metric Learning Loss Functions}
 
 Triplet loss is not the only possible loss function that can be used to construct an embedding space with neural network. There are several other functions for metric learning that can be applied to the same task that is being solved in this thesis. These alternative functions are proposed as a possibility for future work on the project and are not implemented.
 

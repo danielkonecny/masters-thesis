@@ -2,7 +2,7 @@
 
 Models trained with self-supervision can be evaluated at two stages. Obviously, the accuracy of classification of given input is one way to do so. The other way is to evaluate embeddings either with loss function used for training of the encoder or visually after dimensionality reduction. All of these approaches are discussed in this chapter.
 
-At first, the sports pose embeddings are visually analyzed in Section~\ref{sec:visual}. Then, Section~\ref{sec:evaluate-encoder} presents encoder's accuracy on validation dataset and how it is affected by the number of dimensions of the embedding space. Finally, accuracy of the classification itself on validation dataset is compared to supervised model with same architecture in Section~\ref{sec:comparison}. Results of each evaluation are discussed in their respective sections. Experiments were done fairly and no results were cherry-picked.
+At first, the sports pose embeddings are visually analyzed in Section~\ref{sec:visual}. Then, Section~\ref{sec:evaluate-encoder} presents encoder's accuracy on validation dataset and how it is affected by the number of dimensions of the embedding space. Finally, accuracy of the classification itself on validation dataset is compared to supervised model with same architecture in Section~\ref{sec:evaluation-comparison}. Results of each evaluation are discussed in their respective sections. Experiments were done fairly and no results were cherry-picked.
 
 \section{\label{sec:visual}Visual Analysis of Latent Space}
 
@@ -211,39 +211,11 @@ The highest median accuracy on validation dataset achieved model that encoded th
 
 Dataset with very high diversity in sports poses requires more information to be stored and therefore an embedding space with more dimensions. Correctly chosen size of the embedding space can influence the performance of the model and the time it requires for fitting on dataset. Therefore, it is advised to tune this hyperparameter to match the dataset complexity.
 
-\section{\label{sec:comparison}Comparison of Self-Supervised and Supervised-Trained Models}
+\section{\label{sec:evaluation-comparison}Comparison of Self-Supervised and Supervised-Trained Models}
 
 The main advantage of models trained in a self-supervised manner is their ability to perform well with dataset containing smaller number of labeled data than what would supervised training needed. This advantage is shown in evaluation done on different-sized datasets in the following experiments.
 
-The encoder model described in Section~\ref{sec:encoder} is used as the self-supervised learning benchmark. For supervised learning representative, the ResNet50 model is chosen and it is not alternated in any way \cite{he2015deep}. The architectures of both networks are very similar as can be seen in Table~\ref{tab:self-supervised-vs-supervised}, their backbones are the same, only their last few layers are different, and therefore, the evaluations should not be distorted because of the models.
-
-\begin{table}[!ht]
-    \begin{center}
-        \begin{tabular}{ |c|c||c|c| }
-            \hline
-                \multicolumn{2}{|c||}{Self-Supervised Model} & \multicolumn{2}{c|}{Supervised Model} \\
-            \hline
-            \hline
-            Description & Layer -- Shape & Layer -- Shape & Description \\
-            \hline
-            \hline
-                Image & Input -- (224, 224, 3) & Input -- (224, 224, 3) & Image \\
-            \hline
-                \makecell{Backbone \\ ResNet50} & \makecell{Padding -- (230, 230, 3) \\ \vdots \\ Pooling -- (2048)} & \makecell{Padding -- (230, 230, 3) \\ \vdots \\ Pooling -- (2048)} & \makecell{Backbone \\ ResNet50} \\
-            \hline
-                & Dense -- (64) & \multirow{4}{*}{Dense -- (4)} & \multirow{4}{*}{Label} \\
-            \cline{1-2}
-                Embedding & L2 Normalize -- (64) & & \\
-            \cline{1-2}
-                & Dense -- (64) & & \\
-            \cline{1-2}
-                Label & Dense -- (4) & & \\
-            \hline
-        \end{tabular}
-    \end{center}
-    \caption{Comparison of architectures of self-supervised and supervised models. Their input, backbone, and output are identical, only the top of self-supervised model is adjusted for the self-supervised training.}
-    \label{tab:self-supervised-vs-supervised}
-\end{table}
+The encoder and classifier models described in sections \ref{sec:encoder} and \ref{sec:classifier} is used as the self-supervised learning benchmark. For supervised learning representative, the most similar network is chosen. This model and its comparison to the self-supervised one is in Section~\ref{sec:supervised-classifier}.
 
 Since each model is trained in a different way, it is not trivial to set the borderline for number of epochs used for training. For that reason, each model was trained for sufficient number of epochs after which it no longer improved on validation data. The self-supervised model consists of two parts -- the encoder which creates the embedding from an image and the recognizer which classifies the pose from the embedding. The encoder was trained for 30 epochs and the recognizer for 20 epochs. The encoder was trained once and stayed the same for the whole experiment while the recognizer was fitted for every dataset sample. The supervised model was trained for 50 epochs on each dataset sample.
 
