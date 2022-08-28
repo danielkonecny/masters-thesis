@@ -237,18 +237,18 @@ Convolutional layers are usually followed by \textit{pooling} layers in CNN arch
 
 \begin{figure}[!ht]
     \renewcommand{\arraystretch}{1.6}
-    
+    \shorthandoff{-}    % To make "-" in hhline work.
     \centering
     \begin{tabular}{|c|c|c|c| c c c}
-        \cline{1-4}
+        \hhline{----~~~}
             \cellcolor{red!30}12 & \cellcolor{red!30}20 & \cellcolor{yellow!30}30 & \cellcolor{yellow!30}0 & & & \\ 
-        \cline{1-4} \cline{6-7}
+        \hhline{----~--}
             \cellcolor{red!30}8 & \cellcolor{red!30}12 & \cellcolor{yellow!30}2 & \cellcolor{yellow!30}0 & \multirow{2}{*}{$\xrightarrow{2 \times 2 \text{ Max Pool}}$} & \multicolumn{1}{|c|}{\cellcolor{red!30}20} & \multicolumn{1}{c|}{\cellcolor{yellow!30}30} \\
-        \cline{1-4} \cline{6-7}
+        \hhline{----~--}
             \cellcolor{blue!30}34 & \cellcolor{blue!30}70 & \cellcolor{green!30}37 & \cellcolor{green!30}4 & & \multicolumn{1}{|c|}{\cellcolor{blue!30}75} & \multicolumn{1}{c|}{\cellcolor{green!30}37} \\
-        \cline{1-4} \cline{6-7}
+        \hhline{----~--}
             \cellcolor{blue!30}75 & \cellcolor{blue!30}13 & \cellcolor{green!30}25 & \cellcolor{green!30}12 & & & \\
-        \cline{1-4}
+        \hhline{----~~~}
     \end{tabular}
     \caption{Max pooling of $4 \times 4$ grid into a $2 \times 2$ grid with pool size also $2 \times 2$. From every region, the maximal value is taken to the output.}
     \label{fig:pooling}
